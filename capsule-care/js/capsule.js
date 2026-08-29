@@ -1,146 +1,176 @@
 /**
- * كبسولة زجاجية فوتوغرافية — بودرة glitter بكسلية دقيقة + غلاف كريستالي
- * مطابقة للمرجع: فراغ علوي صافٍ، ثلثان سفليان كثيفان، خط منتصف، لمعان زجاجي
+ * كبسولات من صورة المرجع الفوتوغرافية مباشرة
+ * + إعادة تلوين البودرة لكل نوع + حركة وميض/اهتزاز
  */
 import { CAPSULE_TYPES } from "./config.js";
 
-const powderCache = new Map();
+let refImage = null;
+let refReady = false;
+const tintCache = new Map();
 
-function hashStr(s) {
-  let h = 2166136261;
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
+const REF_SRC = new URL("../assets/capsule-ref.jpg", import.meta.url).href;
+
+function loadRef() {
+  if (refImage) return;
+  refImage = new Image();
+  refImage.decoding = "async";
+  refImage.onload = () => {
+    refReady = true;
+    tintCache.clear();
+  };
+  refImage.onerror = () => {
+    console.warn("capsule-ref failed to load", REF_SRC);
+  };
+  refImage.src = REF_SRC;
 }
+loadRef();
 
-/** ضوضاء حتمية ناعمة */
-function noise2(x, y, seed) {
-  const n = Math.sin(x * 127.1 + y * 311.7 + seed * 0.001) * 43758.5453;
-  return n - Math.floor(n);
-}
+/** استخراج منطقة الكبسولة من خلفية بيضاء */
+function buildMaskedSource() {
+  if (!refReady) return null;
+  const iw = refImage.naturalWidth;
+  const ih = refImage.naturalHeight;
+  const c = document.createElement("canvas");
+  c.width = iw;
+  c.height = ih;
+  const ctx = c.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(refImage, 0, 0);
+  const img = ctx.getImageData(0, 0, iw, ih);
+  const d = img.data;
 
-function lerpColor(a, b, t) {
-  return [
-    (a[0] + (b[0] - a[0]) * t) | 0,
-    (a[1] + (b[1] - a[1]) * t) | 0,
-    (a[2] + (b[2] - a[2]) * t) | 0,
-  ];
-}
-
-function hexToRgb(hex) {
-  const h = hex.replace("#", "");
-  return [
-    parseInt(h.slice(0, 2), 16),
-    parseInt(h.slice(2, 4), 16),
-    parseInt(h.slice(4, 6), 16),
-  ];
-}
-
-/**
- * يبني نسيج بودرة عالي الدقة (مرة واحدة لكل نوع/حجم) ثم يُحرَّك بالإزاحة
- */
-function getPowderTexture(typeId, tw, th) {
-  const key = `${typeId}:${tw}x${th}`;
-  if (powderCache.has(key)) return powderCache.get(key);
-
-  const def = CAPSULE_TYPES[typeId];
-  const colors = def.powder.map(hexToRgb);
-  // ألوان التدرج من الأعلى للأسفل: أبيض لامع → فاتح → وسط → داكن → كحلي
-  const stops = [
-    { y: 0.0, c: colors[0] },
-    { y: 0.15, c: colors[1] },
-    { y: 0.4, c: colors[2] },
-    { y: 0.7, c: colors[3] },
-    { y: 1.0, c: colors[4] || colors[3] },
-  ];
-
-  const canvas = document.createElement("canvas");
-  canvas.width = tw;
-  canvas.height = th;
-  const ctx = canvas.getContext("2d");
-  const img = ctx.createImageData(tw, th);
-  const data = img.data;
-  const seed = hashStr(typeId);
-
-  for (let y = 0; y < th; y++) {
-    const v = y / th;
-    // اختر لون التدرج
-    let col = stops[stops.length - 1].c;
-    for (let s = 0; s < stops.length - 1; s++) {
-      if (v >= stops[s].y && v <= stops[s + 1].y) {
-        const tt = (v - stops[s].y) / (stops[s + 1].y - stops[s].y);
-        col = lerpColor(stops[s].c, stops[s + 1].c, tt);
-        break;
-      }
+  // أزل الخلفية البيضاء تقريباً (chroma key ناعم)
+  for (let i = 0; i < d.length; i += 4) {
+    const r = d[i];
+    const g = d[i + 1];
+    const b = d[i + 2];
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const isWhite = r > 245 && g > 245 && b > 245;
+    const isNearWhite = r > 230 && g > 230 && b > 230 && max - min < 12;
+    if (isWhite || isNearWhite) {
+      d[i + 3] = 0;
     }
+  }
+  ctx.putImageData(img, 0, 0);
+  return c;
+}
 
-    for (let x = 0; x < tw; x++) {
-      const u = x / tw;
-      const i = (y * tw + x) * 4;
+let maskedSource = null;
 
-      // كثافة حبيبية: نقاط لامعة داكنة/فاتحة كرمل glitter
-      const n1 = noise2(x * 0.9, y * 0.9, seed);
-      const n2 = noise2(x * 2.3 + 10, y * 2.1, seed + 7);
-      const n3 = noise2(x * 5.1, y * 4.7, seed + 19);
-      const grain = n1 * 0.55 + n2 * 0.3 + n3 * 0.15;
+function getMasked() {
+  if (!refReady) return null;
+  if (!maskedSource) maskedSource = buildMaskedSource();
+  return maskedSource;
+}
 
-      // فراغات صغيرة بين الحبات
-      const gap = n3 > 0.82 ? 0.35 : 1;
+function rgbToHsl(r, g, b) {
+  r /= 255;
+  g /= 255;
+  b /= 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  let h = 0;
+  let s = 0;
+  const l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r:
+        h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+        break;
+      case g:
+        h = ((b - r) / d + 2) / 6;
+        break;
+      default:
+        h = ((r - g) / d + 4) / 6;
+    }
+  }
+  return [h, s, l];
+}
 
-      let r = col[0] * (0.55 + grain * 0.7) * gap;
-      let g = col[1] * (0.55 + grain * 0.7) * gap;
-      let b = col[2] * (0.55 + grain * 0.7) * gap;
+function hslToRgb(h, s, l) {
+  let r;
+  let g;
+  let b;
+  if (s === 0) {
+    r = g = b = l;
+  } else {
+    const hue2rgb = (p, q, t) => {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1 / 6) return p + (q - p) * 6 * t;
+      if (t < 1 / 2) return q;
+      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+      return p;
+    };
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    r = hue2rgb(p, q, h + 1 / 3);
+    g = hue2rgb(p, q, h);
+    b = hue2rgb(p, q, h - 1 / 3);
+  }
+  return [(r * 255) | 0, (g * 255) | 0, (b * 255) | 0];
+}
 
-      // لمعات glitter بيضاء نجمية نادرة
-      if (n2 > 0.92 && n1 > 0.5) {
-        r = 255;
-        g = 255;
-        b = 255;
-      } else if (n3 > 0.88) {
-        r = Math.min(255, r + 90);
-        g = Math.min(255, g + 90);
-        b = Math.min(255, b + 100);
-      }
+/** هدف Hue لكل نوع (درجة 0-1) */
+const TYPE_HUE = {
+  cyan: null, // أصلي بدون تحويل
+  azure: 0.58,
+  jade: 0.38,
+  amber: 0.12,
+  ruby: 0.0,
+  violet: 0.78,
+};
 
-      // تغميق عند الحواف الأفقية قليلاً للعمق
-      const edge = Math.min(u, 1 - u);
-      const shade = 0.75 + edge * 0.5;
-      data[i] = Math.min(255, r * shade);
-      data[i + 1] = Math.min(255, g * shade);
-      data[i + 2] = Math.min(255, b * shade);
-      data[i + 3] = 255;
+function getTintedSprite(typeId) {
+  const src = getMasked();
+  if (!src) return null;
+  if (tintCache.has(typeId)) return tintCache.get(typeId);
+
+  const targetHue = TYPE_HUE[typeId];
+  if (targetHue == null) {
+    tintCache.set(typeId, src);
+    return src;
+  }
+
+  const c = document.createElement("canvas");
+  c.width = src.width;
+  c.height = src.height;
+  const ctx = c.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(src, 0, 0);
+  const img = ctx.getImageData(0, 0, c.width, c.height);
+  const d = img.data;
+
+  for (let i = 0; i < d.length; i += 4) {
+    if (d[i + 3] < 10) continue;
+    const r = d[i];
+    const g = d[i + 1];
+    const b = d[i + 2];
+    const [h, s, l] = rgbToHsl(r, g, b);
+
+    // أعد تلوين البودرة الملوّنة فقط (تشبع واضح، ليست إبرازات زجاجية)
+    // البودرة المرجعية في نطاق أزرق/سماوي
+    const isPowder =
+      s > 0.12 &&
+      l > 0.05 &&
+      l < 0.92 &&
+      !(r > 220 && g > 220 && b > 220) &&
+      !(s < 0.2 && l > 0.75);
+
+    if (isPowder) {
+      // حافظ على الإضاءة والتشبع تقريباً، غيّر الـ hue
+      const satBoost = Math.min(1, s * 1.15);
+      const [nr, ng, nb] = hslToRgb(targetHue, satBoost, l);
+      d[i] = nr;
+      d[i + 1] = ng;
+      d[i + 2] = nb;
     }
   }
 
   ctx.putImageData(img, 0, 0);
-
-  // طبقة حبات أكبر قليلة فوق النسيج لمزيد من الوضوح على المسافات البعيدة
-  for (let i = 0; i < 80; i++) {
-    const px = noise2(i, 1, seed) * tw;
-    const py = noise2(i, 2, seed) * th;
-    const pr = 0.8 + noise2(i, 3, seed) * 2.2;
-    const v = py / th;
-    let col = stops[2].c;
-    for (let s = 0; s < stops.length - 1; s++) {
-      if (v >= stops[s].y && v <= stops[s + 1].y) {
-        col = lerpColor(stops[s].c, stops[s + 1].c, (v - stops[s].y) / (stops[s + 1].y - stops[s].y));
-        break;
-      }
-    }
-    const grd = ctx.createRadialGradient(px - pr * 0.3, py - pr * 0.3, 0, px, py, pr);
-    grd.addColorStop(0, "#ffffff");
-    grd.addColorStop(0.4, `rgb(${col[0]},${col[1]},${col[2]})`);
-    grd.addColorStop(1, `rgb(${Math.max(0, col[0] - 40)},${Math.max(0, col[1] - 40)},${Math.max(0, col[2] - 30)})`);
-    ctx.beginPath();
-    ctx.arc(px, py, pr, 0, Math.PI * 2);
-    ctx.fillStyle = grd;
-    ctx.fill();
-  }
-
-  powderCache.set(key, canvas);
-  return canvas;
+  tintCache.set(typeId, c);
+  return c;
 }
 
 export class CapsulePowder {
@@ -148,56 +178,30 @@ export class CapsulePowder {
     this.typeId = typeId;
     this.seed = seed;
     this.time = seed * 0.01;
-    this.offsetY = 0;
     this.shakeAmp = 0;
-    // جزيئات عائمة قليلة جداً في الفراغ العلوي (مثل المرجع)
-    this.floaters = [];
-    for (let i = 0; i < 7; i++) {
-      this.floaters.push({
-        x: 0.28 + Math.random() * 0.44,
-        y: 0.12 + Math.random() * 0.2,
-        r: 0.012 + Math.random() * 0.02,
-        vx: (Math.random() - 0.5) * 0.015,
-        vy: (Math.random() - 0.5) * 0.01,
+    this.sparkles = [];
+    for (let i = 0; i < 6; i++) {
+      this.sparkles.push({
+        x: 0.25 + Math.random() * 0.5,
+        y: 0.12 + Math.random() * 0.28,
         phase: Math.random() * Math.PI * 2,
-        twinkle: 3 + Math.random() * 5,
+        speed: 3 + Math.random() * 5,
+        r: 0.01 + Math.random() * 0.015,
       });
     }
   }
 
   setType(typeId) {
-    if (this.typeId === typeId) return;
     this.typeId = typeId;
   }
 
   shake(intensity = 1) {
-    this.shakeAmp = Math.min(1.5, this.shakeAmp + intensity);
-    for (const f of this.floaters) {
-      f.vx += (Math.random() - 0.5) * 0.1 * intensity;
-      f.vy += (Math.random() - 0.5) * 0.08 * intensity;
-    }
+    this.shakeAmp = Math.min(2, this.shakeAmp + intensity);
   }
 
   update(dt) {
     this.time += dt;
-    this.offsetY += dt * 0.015;
-    if (this.shakeAmp > 0) this.shakeAmp = Math.max(0, this.shakeAmp - dt * 1.8);
-    for (const f of this.floaters) {
-      f.x += f.vx * dt + Math.sin(this.time * 1.5 + f.phase) * 0.002;
-      f.y += f.vy * dt;
-      f.vx *= 0.97;
-      f.vy *= 0.97;
-      if (f.y < 0.08) {
-        f.y = 0.08;
-        f.vy *= -0.3;
-      }
-      if (f.y > 0.34) {
-        f.y = 0.34;
-        f.vy *= -0.3;
-      }
-      if (f.x < 0.22) f.x = 0.22;
-      if (f.x > 0.78) f.x = 0.78;
-    }
+    if (this.shakeAmp > 0) this.shakeAmp = Math.max(0, this.shakeAmp - dt * 2);
   }
 }
 
@@ -221,188 +225,80 @@ export function drawCapsule(ctx, x, y, w, h, typeId, powder, opts = {}) {
   ctx.scale(scale, scale);
   ctx.translate(-cx, -cy);
 
-  // نسب أقرب للمرجع (أعرض قليلاً، أقل طولاً مبالغاً)
-  const bw = w * 0.66;
-  const bh = h * 0.88;
+  const bw = w * 0.72;
+  const bh = h * 0.9;
   const bx = cx - bw / 2;
   const by = cy - bh / 2;
 
   // ظل
   ctx.beginPath();
-  ctx.ellipse(cx, y + h * 0.94, bw * 0.4, h * 0.042, 0, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(0,0,0,0.18)";
+  ctx.ellipse(cx, y + h * 0.93, bw * 0.38, h * 0.04, 0, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(0,0,0,0.2)";
   ctx.fill();
 
-  // —— المحتوى ——
-  ctx.save();
-  pillPath(ctx, bx + bw * 0.07, by + bh * 0.04, bw * 0.86, bh * 0.92);
-  ctx.clip();
-
-  // فراغ علوي زجاجي صافٍ
-  const air = ctx.createLinearGradient(bx, by, bx, by + bh * 0.38);
-  air.addColorStop(0, "rgba(255,255,255,0.55)");
-  air.addColorStop(0.6, "rgba(235,245,255,0.12)");
-  air.addColorStop(1, "rgba(255,255,255,0)");
-  ctx.fillStyle = air;
-  ctx.fillRect(bx, by, bw, bh * 0.38);
-
-  // سطح البودرة (~38% من الأعلى) مع تموج خفيف
-  const fillTop = by + bh * 0.34;
-  const shake = powder ? powder.shakeAmp * bh * 0.02 : 0;
+  const sprite = getTintedSprite(typeId);
   const t = powder?.time || 0;
+  const shake = powder?.shakeAmp || 0;
+  const jx = Math.sin(t * 28) * shake * w * 0.02;
+  const jy = Math.cos(t * 24) * shake * h * 0.015;
+  // حركة بودرة خفيفة مستمرة (اهتزاز مجهري)
+  const breath = Math.sin(t * 2.2) * h * 0.004;
 
-  // نسيج البودرة الكثيف
-  const texW = Math.max(48, Math.round(bw * 2));
-  const texH = Math.max(64, Math.round(bh * 1.6));
-  const tex = getPowderTexture(typeId, texW, texH);
-  const scroll = ((powder?.offsetY || 0) % 1) * texH * 0.08;
-  const jx = shake * Math.sin(t * 30);
-  const jy = shake * Math.cos(t * 28) + scroll;
-
-  ctx.save();
-  // قص شكل كومة البودرة بسطح غير مستوٍ
-  ctx.beginPath();
-  ctx.moveTo(bx, by + bh);
-  ctx.lineTo(bx, fillTop + bh * 0.02);
-  for (let i = 0; i <= 16; i++) {
-    const px = bx + (bw * i) / 16;
-    const wave =
-      Math.sin(i * 0.9 + t * 2.2) * bh * 0.012 +
-      Math.sin(i * 2.1 + t * 1.4) * bh * 0.006;
-    ctx.lineTo(px, fillTop + wave + jy * 0.15);
+  if (sprite) {
+    ctx.drawImage(sprite, bx + jx, by + jy + breath, bw, bh);
+  } else {
+    // احتياطي ريثما تُحمَّل الصورة
+    drawFallback(ctx, bx, by, bw, bh, def);
   }
-  ctx.lineTo(bx + bw, by + bh);
-  ctx.closePath();
-  ctx.clip();
 
-  ctx.drawImage(tex, bx - 4 + jx, fillTop - 8 + jy, bw + 8, bh * 0.72 + 16);
-  // طبقة ثانية مزاحمة للعمق الحركي
-  ctx.globalAlpha = 0.35;
-  ctx.drawImage(tex, bx + 2 - jx, fillTop + 4 - jy * 0.5, bw - 2, bh * 0.7);
-  ctx.globalAlpha = 1;
-  ctx.restore();
-
-  // جزيئات فضية قليلة جداً فوق السطح
-  if (powder?.floaters) {
-    for (const f of powder.floaters) {
-      const px = bx + f.x * bw;
-      const py = by + f.y * bh;
-      const pr = Math.max(0.8, f.r * Math.min(bw, bh));
-      const tw = 0.4 + 0.6 * Math.abs(Math.sin(t * f.twinkle + f.phase));
-      ctx.globalAlpha = alpha * tw;
+  // وميض إضافي فوق الفراغ العلوي ليوحي بحركة البودرة
+  if (powder?.sparkles && sprite) {
+    for (const s of powder.sparkles) {
+      const tw = 0.25 + 0.75 * Math.abs(Math.sin(t * s.speed + s.phase));
+      const px = bx + s.x * bw + jx;
+      const py = by + s.y * bh + jy;
+      const pr = s.r * Math.min(bw, bh);
+      ctx.globalAlpha = alpha * tw * 0.85;
+      ctx.fillStyle = "#ffffff";
       ctx.beginPath();
       ctx.arc(px, py, pr, 0, Math.PI * 2);
-      ctx.fillStyle = "#ffffff";
       ctx.fill();
-      // وميض صغير
       ctx.beginPath();
-      ctx.moveTo(px - pr * 2, py);
-      ctx.lineTo(px + pr * 2, py);
-      ctx.moveTo(px, py - pr * 1.8);
-      ctx.lineTo(px, py + pr * 1.8);
+      ctx.moveTo(px - pr * 2.2, py);
+      ctx.lineTo(px + pr * 2.2, py);
+      ctx.moveTo(px, py - pr * 2);
+      ctx.lineTo(px, py + pr * 2);
       ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = Math.max(0.5, pr * 0.35);
+      ctx.lineWidth = Math.max(0.5, pr * 0.4);
       ctx.stroke();
       ctx.globalAlpha = alpha;
     }
   }
 
-  ctx.restore(); // end clip interior
-
-  // —— غلاف زجاجي كريستالي ——
-  // Fresnel / سماكة الحافة
-  pillPath(ctx, bx, by, bw, bh);
-  const rim = ctx.createLinearGradient(bx, by, bx + bw, by);
-  rim.addColorStop(0, "rgba(140, 175, 205, 0.28)");
-  rim.addColorStop(0.2, "rgba(255,255,255,0.05)");
-  rim.addColorStop(0.8, "rgba(255,255,255,0.05)");
-  rim.addColorStop(1, "rgba(130, 165, 195, 0.26)");
-  ctx.fillStyle = rim;
-  ctx.fill();
-
-  // تدرج عمودي خفيف للزجاج
-  pillPath(ctx, bx, by, bw, bh);
-  const glassV = ctx.createLinearGradient(bx, by, bx, by + bh);
-  glassV.addColorStop(0, "rgba(255,255,255,0.14)");
-  glassV.addColorStop(0.5, "rgba(255,255,255,0.02)");
-  glassV.addColorStop(1, "rgba(180, 200, 220, 0.1)");
-  ctx.fillStyle = glassV;
-  ctx.fill();
-
-  // إطار أبيض خارجي
-  pillPath(ctx, bx, by, bw, bh);
-  ctx.strokeStyle = "rgba(255,255,255,0.92)";
-  ctx.lineWidth = Math.max(2, w * 0.034);
-  ctx.stroke();
-
-  // إطار داخلي
-  pillPath(ctx, bx + 1.8, by + 1.8, bw - 3.6, bh - 3.6);
-  ctx.strokeStyle = "rgba(90, 125, 155, 0.42)";
-  ctx.lineWidth = Math.max(0.8, w * 0.012);
-  ctx.stroke();
-
-  // خط التحام المنتصف الواضح
-  ctx.save();
-  pillPath(ctx, bx, by, bw, bh);
-  ctx.clip();
-  ctx.beginPath();
-  ctx.moveTo(bx + bw * 0.06, cy);
-  ctx.lineTo(bx + bw * 0.94, cy);
-  ctx.strokeStyle = "rgba(55, 90, 120, 0.55)";
-  ctx.lineWidth = Math.max(1.3, w * 0.022);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(bx + bw * 0.08, cy - 1.2);
-  ctx.lineTo(bx + bw * 0.92, cy - 1.2);
-  ctx.strokeStyle = "rgba(255,255,255,0.45)";
-  ctx.lineWidth = 1;
-  ctx.stroke();
-  // ظل خفيف تحت الخط
-  ctx.beginPath();
-  ctx.moveTo(bx + bw * 0.1, cy + 1.3);
-  ctx.lineTo(bx + bw * 0.9, cy + 1.3);
-  ctx.strokeStyle = "rgba(0,0,0,0.12)";
-  ctx.lineWidth = 1;
-  ctx.stroke();
-  ctx.restore();
-
-  // speculars
-  ctx.beginPath();
-  ctx.ellipse(cx - bw * 0.16, by + bh * 0.16, bw * 0.15, bh * 0.1, -0.48, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(255,255,255,0.82)";
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.ellipse(cx + bw * 0.12, by + bh * 0.085, bw * 0.06, bh * 0.028, 0.3, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(255,255,255,0.65)";
-  ctx.fill();
-
-  // شريط لمعان طويل
-  ctx.beginPath();
-  ctx.moveTo(bx + bw * 0.16, by + bh * 0.14);
-  ctx.quadraticCurveTo(bx + bw * 0.04, cy, bx + bw * 0.18, by + bh * 0.86);
-  ctx.strokeStyle = "rgba(255,255,255,0.65)";
-  ctx.lineWidth = Math.max(1.6, w * 0.028);
-  ctx.lineCap = "round";
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(bx + bw * 0.85, by + bh * 0.2);
-  ctx.quadraticCurveTo(bx + bw * 0.96, cy, bx + bw * 0.83, by + bh * 0.78);
-  ctx.strokeStyle = "rgba(185, 210, 230, 0.4)";
-  ctx.lineWidth = Math.max(1, w * 0.014);
-  ctx.stroke();
-
   if (selected || highlight > 0) {
-    pillPath(ctx, bx - 3, by - 3, bw + 6, bh + 6);
+    pillPath(ctx, bx - 2, by - 2, bw + 4, bh + 4);
     ctx.strokeStyle = def.glow;
-    ctx.lineWidth = 3.2 + highlight * 2;
+    ctx.lineWidth = 3 + highlight * 2;
     ctx.stroke();
   }
 
   if (special) drawSpecialBadge(ctx, cx, cy, w * 0.16, special);
 
   ctx.restore();
+}
+
+function drawFallback(ctx, bx, by, bw, bh, def) {
+  pillPath(ctx, bx, by, bw, bh);
+  ctx.fillStyle = "rgba(200,220,235,0.25)";
+  ctx.fill();
+  ctx.strokeStyle = "rgba(255,255,255,0.8)";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  const g = ctx.createLinearGradient(bx, by + bh * 0.35, bx, by + bh);
+  g.addColorStop(0, def.powder[1]);
+  g.addColorStop(1, def.powder[4] || def.powder[3]);
+  ctx.fillStyle = g;
+  ctx.fillRect(bx + bw * 0.1, by + bh * 0.38, bw * 0.8, bh * 0.55);
 }
 
 function pillPath(ctx, x, y, w, h) {
