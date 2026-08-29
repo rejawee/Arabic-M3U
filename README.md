@@ -2,22 +2,19 @@
 
 لعبة مطابقة ثلاثية فاخرة بطابع طبي: أنت الطبيب، والكبسولات تحمل بودرة دواء متحركة بدقة عالية.
 
-## العب الآن (رابط مباشر)
+## العب الآن
 
-طالما بيئة النشر تعمل، افتح:
+**https://experiment-share-chronicles-westminster.trycloudflare.com**
 
-**https://nodes-profiles-canberra-scanners.trycloudflare.com**
-
-> إن توقف الرابط لاحقاً، شغّل اللعبة محلياً كما في الأسفل، أو فعّل GitHub Pages من فرع `gh-pages`.
+> رابط مؤقت. الرابط الدائم: **https://rejawee.github.io/Arabic-M3U/**
 
 ## تشغيل محلي
 
 ```bash
-cd capsule-care
 npm start
 ```
 
-ثم افتح على جهازك: http://localhost:4173
+ثم افتح: http://localhost:4173
 
 ## GitHub Pages (رابط دائم)
 
