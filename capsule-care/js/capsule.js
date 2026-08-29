@@ -25,7 +25,7 @@ function loadRef() {
 }
 loadRef();
 
-/** استخراج منطقة الكبسولة من خلفية بيضاء */
+/** استخراج منطقة الكبسولة من خلفية بيضاء مع قصّ الحدود */
 function buildMaskedSource() {
   if (!refReady) return null;
   const iw = refImage.naturalWidth;
@@ -38,21 +38,47 @@ function buildMaskedSource() {
   const img = ctx.getImageData(0, 0, iw, ih);
   const d = img.data;
 
-  // أزل الخلفية البيضاء تقريباً (chroma key ناعم)
-  for (let i = 0; i < d.length; i += 4) {
-    const r = d[i];
-    const g = d[i + 1];
-    const b = d[i + 2];
-    const max = Math.max(r, g, b);
-    const min = Math.min(r, g, b);
-    const isWhite = r > 245 && g > 245 && b > 245;
-    const isNearWhite = r > 230 && g > 230 && b > 230 && max - min < 12;
-    if (isWhite || isNearWhite) {
-      d[i + 3] = 0;
+  let minX = iw;
+  let minY = ih;
+  let maxX = 0;
+  let maxY = 0;
+
+  for (let y = 0; y < ih; y++) {
+    for (let x = 0; x < iw; x++) {
+      const i = (y * iw + x) * 4;
+      const r = d[i];
+      const g = d[i + 1];
+      const b = d[i + 2];
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      const isWhite = r > 245 && g > 245 && b > 245;
+      const isNearWhite = r > 228 && g > 228 && b > 228 && max - min < 14;
+      if (isWhite || isNearWhite) {
+        d[i + 3] = 0;
+      } else {
+        if (x < minX) minX = x;
+        if (y < minY) minY = y;
+        if (x > maxX) maxX = x;
+        if (y > maxY) maxY = y;
+      }
     }
   }
   ctx.putImageData(img, 0, 0);
-  return c;
+
+  // هامش صغير حول الكبسولة
+  const pad = Math.max(4, Math.round(iw * 0.01));
+  minX = Math.max(0, minX - pad);
+  minY = Math.max(0, minY - pad);
+  maxX = Math.min(iw - 1, maxX + pad);
+  maxY = Math.min(ih - 1, maxY + pad);
+
+  const cw = maxX - minX + 1;
+  const ch = maxY - minY + 1;
+  const out = document.createElement("canvas");
+  out.width = cw;
+  out.height = ch;
+  out.getContext("2d").drawImage(c, minX, minY, cw, ch, 0, 0, cw, ch);
+  return out;
 }
 
 let maskedSource = null;
