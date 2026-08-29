@@ -392,33 +392,35 @@ function drawSpecialOverlay(ctx, cx, cy, bw, bh, special, def, t) {
   ctx.restore();
 }
 
-export function drawBoardFrame(ctx, w, h, cell, gap, rows, cols) {
+export function drawBoardFrame(ctx, w, h, cell, gap, rows, cols, theme = null) {
   const gw = cols * cell + (cols - 1) * gap;
   const gh = rows * cell + (rows - 1) * gap;
   const ox = (w - gw) / 2;
   const oy = (h - gh) / 2;
+  const c = theme?.colors || {};
 
-  // إطار لوحة فاخر
   const pad = cell * 0.18;
   roundRectPath(ctx, ox - pad, oy - pad, gw + pad * 2, gh + pad * 2, cell * 0.28);
   const frame = ctx.createLinearGradient(0, oy - pad, 0, oy + gh + pad);
-  frame.addColorStop(0, "rgba(30, 70, 90, 0.85)");
-  frame.addColorStop(1, "rgba(8, 28, 40, 0.9)");
+  frame.addColorStop(0, c.frameTop || "rgba(30, 70, 90, 0.85)");
+  frame.addColorStop(1, c.frameBottom || "rgba(8, 28, 40, 0.9)");
   ctx.fillStyle = frame;
   ctx.fill();
-  ctx.strokeStyle = "rgba(255,215,120,0.35)";
+  ctx.strokeStyle = c.frameBorder || "rgba(255,215,120,0.35)";
   ctx.lineWidth = 2;
   ctx.stroke();
 
   for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      const x = ox + c * (cell + gap);
+    for (let cIdx = 0; cIdx < cols; cIdx++) {
+      const x = ox + cIdx * (cell + gap);
       const y = oy + r * (cell + gap);
       const rr = cell * 0.24;
       roundRectPath(ctx, x, y, cell, cell, rr);
-      ctx.fillStyle = (r + c) % 2 === 0 ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.18)";
+      ctx.fillStyle =
+        (r + cIdx) % 2 === 0
+          ? c.cellLight || "rgba(255,255,255,0.07)"
+          : c.cellDark || "rgba(0,0,0,0.18)";
       ctx.fill();
-      // حافة خلية لامعة
       ctx.strokeStyle = "rgba(255,255,255,0.06)";
       ctx.lineWidth = 1;
       ctx.stroke();
@@ -437,110 +439,137 @@ function roundRectPath(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-/** رسم أيقونات المعززات بأسلوب ورقة الأصول */
+/** رسم أيقونات المعززات — أسلوب Royal Match */
 export function drawBoosterIcon(ctx, kind, size) {
   ctx.clearRect(0, 0, size, size);
   const s = size;
   const cx = s / 2;
   const cy = s / 2;
+  const icon = kind === "syringe" ? "hammer" : kind === "spray" ? "rocket" : kind === "pulse" ? "bomb" : kind === "shuffle" ? "mix" : kind;
 
-  if (kind === "syringe" || kind === "row") {
-    // مطرقة طبية
+  if (icon === "hammer" || icon === "row") {
     ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate(-0.35);
-    // رأس
-    const hg = ctx.createLinearGradient(-s * 0.28, 0, s * 0.28, 0);
-    hg.addColorStop(0, "#ff6b6b");
-    hg.addColorStop(1, "#c62828");
+    ctx.translate(cx, cy - s * 0.02);
+    ctx.rotate(-0.42);
+    const hg = ctx.createLinearGradient(-s * 0.3, 0, s * 0.3, 0);
+    hg.addColorStop(0, "#ff8a80");
+    hg.addColorStop(0.5, "#e53935");
+    hg.addColorStop(1, "#b71c1c");
     ctx.fillStyle = hg;
-    roundRectPath(ctx, -s * 0.3, -s * 0.22, s * 0.6, s * 0.28, s * 0.06);
+    roundRectPath(ctx, -s * 0.32, -s * 0.24, s * 0.64, s * 0.3, s * 0.07);
     ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,0.55)";
+    ctx.lineWidth = s * 0.025;
+    ctx.stroke();
     ctx.fillStyle = "#fff";
-    ctx.font = `bold ${s * 0.18}px sans-serif`;
+    ctx.font = `bold ${s * 0.2}px sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("+", 0, -s * 0.07);
-    // مقبض
-    ctx.fillStyle = "#4fc3f7";
-    roundRectPath(ctx, -s * 0.07, s * 0.02, s * 0.14, s * 0.32, s * 0.04);
+    ctx.fillText("+", 0, -s * 0.08);
+    const handle = ctx.createLinearGradient(0, s * 0.02, 0, s * 0.38);
+    handle.addColorStop(0, "#64b5f6");
+    handle.addColorStop(1, "#1565c0");
+    ctx.fillStyle = handle;
+    roundRectPath(ctx, -s * 0.08, s * 0.04, s * 0.16, s * 0.34, s * 0.05);
     ctx.fill();
     ctx.fillStyle = "#ffd54f";
-    ctx.fillRect(-s * 0.09, s * 0.3, s * 0.18, s * 0.06);
+    roundRectPath(ctx, -s * 0.11, s * 0.34, s * 0.22, s * 0.07, s * 0.03);
+    ctx.fill();
     ctx.restore();
-  } else if (kind === "spray" || kind === "col") {
-    // صاروخ
+  } else if (icon === "rocket" || icon === "col") {
     ctx.save();
-    ctx.translate(cx, cy + s * 0.04);
+    ctx.translate(cx, cy + s * 0.02);
+    const body = ctx.createLinearGradient(-s * 0.12, -s * 0.3, s * 0.12, s * 0.2);
+    body.addColorStop(0, "#ffffff");
+    body.addColorStop(0.4, "#ffcdd2");
+    body.addColorStop(1, "#ef5350");
     ctx.fillStyle = "#ef5350";
     ctx.beginPath();
-    ctx.moveTo(0, -s * 0.32);
-    ctx.lineTo(s * 0.16, s * 0.05);
-    ctx.lineTo(-s * 0.16, s * 0.05);
+    ctx.moveTo(0, -s * 0.34);
+    ctx.lineTo(s * 0.17, s * 0.06);
+    ctx.lineTo(-s * 0.17, s * 0.06);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = "#fff";
-    roundRectPath(ctx, -s * 0.1, -s * 0.02, s * 0.2, s * 0.22, s * 0.04);
+    roundRectPath(ctx, -s * 0.11, -s * 0.04, s * 0.22, s * 0.24, s * 0.05);
+    ctx.fillStyle = body;
     ctx.fill();
     ctx.fillStyle = "#ffd54f";
     ctx.beginPath();
-    ctx.arc(0, s * 0.05, s * 0.06, 0, Math.PI * 2);
+    ctx.arc(0, s * 0.06, s * 0.07, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = "#ff9800";
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = s * 0.018;
     ctx.beginPath();
-    ctx.moveTo(-s * 0.08, s * 0.2);
-    ctx.lineTo(0, s * 0.36);
-    ctx.lineTo(s * 0.08, s * 0.2);
+    ctx.moveTo(-s * 0.04, -s * 0.12);
+    ctx.lineTo(s * 0.04, -s * 0.12);
+    ctx.stroke();
+    const flame = ctx.createLinearGradient(0, s * 0.18, 0, s * 0.4);
+    flame.addColorStop(0, "#ffeb3b");
+    flame.addColorStop(1, "#ff5722");
+    ctx.fillStyle = flame;
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.09, s * 0.2);
+    ctx.quadraticCurveTo(0, s * 0.42 + Math.sin(Date.now() / 120) * s * 0.02, s * 0.09, s * 0.2);
     ctx.fill();
     ctx.restore();
-  } else if (kind === "pulse" || kind === "bomb") {
-    // قنبلة حيوية
-    const g = ctx.createRadialGradient(cx - s * 0.1, cy - s * 0.1, 2, cx, cy, s * 0.32);
-    g.addColorStop(0, "#64b5f6");
-    g.addColorStop(1, "#1565c0");
+  } else if (icon === "bomb" || icon === "pulse") {
+    const g = ctx.createRadialGradient(cx - s * 0.12, cy - s * 0.08, 2, cx, cy + s * 0.02, s * 0.3);
+    g.addColorStop(0, "#90caf9");
+    g.addColorStop(0.55, "#1e88e5");
+    g.addColorStop(1, "#0d47a1");
     ctx.beginPath();
-    ctx.arc(cx, cy + s * 0.04, s * 0.28, 0, Math.PI * 2);
+    ctx.arc(cx, cy + s * 0.03, s * 0.27, 0, Math.PI * 2);
     ctx.fillStyle = g;
     ctx.fill();
     ctx.strokeStyle = "#ffd600";
-    ctx.lineWidth = s * 0.04;
+    ctx.lineWidth = s * 0.045;
     ctx.beginPath();
-    ctx.arc(cx, cy + s * 0.04, s * 0.14, 0, Math.PI * 2);
+    ctx.arc(cx, cy + s * 0.03, s * 0.13, 0, Math.PI * 2);
     ctx.stroke();
     ctx.fillStyle = "#ffd600";
-    ctx.font = `${s * 0.22}px sans-serif`;
+    ctx.font = `bold ${s * 0.18}px sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("☢", cx, cy + s * 0.05);
-    // فتيل
+    ctx.fillText("☢", cx, cy + s * 0.04);
     ctx.strokeStyle = "#ffcc80";
-    ctx.lineWidth = s * 0.03;
+    ctx.lineWidth = s * 0.028;
     ctx.beginPath();
-    ctx.moveTo(cx + s * 0.12, cy - s * 0.18);
-    ctx.quadraticCurveTo(cx + s * 0.22, cy - s * 0.32, cx + s * 0.1, cy - s * 0.34);
+    ctx.moveTo(cx + s * 0.14, cy - s * 0.16);
+    ctx.quadraticCurveTo(cx + s * 0.26, cy - s * 0.32, cx + s * 0.12, cy - s * 0.36);
     ctx.stroke();
     ctx.fillStyle = "#ff5722";
     ctx.beginPath();
-    ctx.arc(cx + s * 0.1, cy - s * 0.34, s * 0.05, 0, Math.PI * 2);
+    ctx.arc(cx + s * 0.12, cy - s * 0.36, s * 0.055, 0, Math.PI * 2);
     ctx.fill();
-  } else {
-    // حقنة خضراء / إعادة ترتيب
+  } else if (icon === "mix") {
     ctx.save();
     ctx.translate(cx, cy);
-    ctx.rotate(0.5);
-    ctx.fillStyle = "#90a4ae";
-    roundRectPath(ctx, -s * 0.08, -s * 0.32, s * 0.16, s * 0.2, s * 0.03);
+    const jar = ctx.createLinearGradient(-s * 0.18, -s * 0.2, s * 0.18, s * 0.28);
+    jar.addColorStop(0, "#b2ff59");
+    jar.addColorStop(0.45, "#00e676");
+    jar.addColorStop(1, "#00c853");
+    roundRectPath(ctx, -s * 0.18, -s * 0.08, s * 0.36, s * 0.34, s * 0.06);
+    ctx.fillStyle = jar;
     ctx.fill();
-    const liq = ctx.createLinearGradient(0, -s * 0.1, 0, s * 0.28);
-    liq.addColorStop(0, "#69f0ae");
-    liq.addColorStop(1, "#00c853");
-    ctx.fillStyle = liq;
-    roundRectPath(ctx, -s * 0.1, -s * 0.12, s * 0.2, s * 0.34, s * 0.04);
+    ctx.strokeStyle = "rgba(255,255,255,0.5)";
+    ctx.lineWidth = s * 0.02;
+    ctx.stroke();
+    ctx.fillStyle = "#cfd8dc";
+    roundRectPath(ctx, -s * 0.2, -s * 0.18, s * 0.4, s * 0.12, s * 0.04);
     ctx.fill();
-    ctx.fillStyle = "#eceff1";
-    ctx.fillRect(-s * 0.12, s * 0.2, s * 0.24, s * 0.06);
-    ctx.fillStyle = "#b0bec5";
-    ctx.fillRect(-s * 0.03, s * 0.26, s * 0.06, s * 0.12);
+    ctx.fillStyle = "#78909c";
+    ctx.fillRect(-s * 0.04, -s * 0.28, s * 0.08, s * 0.12);
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = s * 0.022;
+    ctx.lineCap = "round";
+    for (let i = 0; i < 3; i++) {
+      const a = (i / 3) * Math.PI * 2 + 0.4;
+      ctx.beginPath();
+      ctx.arc(0, s * 0.1, s * 0.1, a, a + 1.2);
+      ctx.stroke();
+    }
     ctx.restore();
+  } else {
+    drawBoosterIcon(ctx, "mix", size);
   }
 }

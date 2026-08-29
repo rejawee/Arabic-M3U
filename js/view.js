@@ -21,7 +21,12 @@ export class BoardView {
     this.onSwap = null;
     this.onCellTap = null;
     this.boosterMode = null;
+    this.theme = null;
     this._bindInput();
+  }
+
+  setTheme(theme) {
+    this.theme = theme;
   }
 
   setBoard(board) {
@@ -103,14 +108,14 @@ export class BoardView {
     const s = this.cssSize;
     ctx.clearRect(0, 0, s, s);
 
-    // إطار جوّي فاخر
+    const tc = this.theme?.colors;
     const bg = ctx.createRadialGradient(s * 0.5, s * 0.3, 10, s * 0.5, s * 0.5, s * 0.7);
-    bg.addColorStop(0, "rgba(30, 110, 120, 0.35)");
-    bg.addColorStop(1, "rgba(4, 28, 36, 0.2)");
+    bg.addColorStop(0, tc?.canvasGlow || "rgba(30, 110, 120, 0.35)");
+    bg.addColorStop(1, "rgba(4, 28, 36, 0.15)");
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, s, s);
 
-    drawBoardFrame(ctx, s, s, this.cell, this.gap, this.board.rows, this.board.cols);
+    drawBoardFrame(ctx, s, s, this.cell, this.gap, this.board.rows, this.board.cols, this.theme);
 
     // خلايا محظورة (معدات طبية / أسرّة)
     for (let r = 0; r < this.board.rows; r++) {

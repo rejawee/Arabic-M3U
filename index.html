@@ -48,7 +48,8 @@
     </section>
 
     <!-- Story intro before level -->
-    <section id="screen-story" class="screen" aria-label="قصة المستوى">
+    <section id="screen-story" class="screen" data-theme="neighborhood" aria-label="قصة المستوى">
+      <div class="story-bg" aria-hidden="true"></div>
       <div class="story-panel">
         <div class="story-clinic" id="story-clinic">عيادة الحي</div>
         <div class="patient-card">
@@ -66,7 +67,11 @@
     </section>
 
     <!-- Gameplay -->
-    <section id="screen-game" class="screen" aria-label="لوحة اللعب">
+    <section id="screen-game" class="screen" data-theme="neighborhood" aria-label="لوحة اللعب">
+      <div class="stage-bg" id="stage-bg" aria-hidden="true">
+        <div class="stage-bg-glow"></div>
+        <div class="stage-bg-decor" id="stage-decor"></div>
+      </div>
       <header class="game-hud">
         <button type="button" class="icon-btn" id="btn-pause" title="إيقاف">❚❚</button>
         <div class="hud-patient">
@@ -83,21 +88,25 @@
         <div class="board-fx" id="board-fx" aria-hidden="true"></div>
       </div>
       <footer class="boosters">
-        <button type="button" class="booster" data-booster="syringe" title="مطرقة طبية — صف">
-          <canvas class="booster-canvas" data-icon="syringe" width="64" height="64"></canvas>
-          <span class="booster-count" id="boost-syringe">3</span>
+        <button type="button" class="booster" data-booster="hammer" title="مطرقة العلاج — امسح صفاً">
+          <canvas class="booster-canvas" data-icon="hammer" width="64" height="64"></canvas>
+          <span class="booster-label">مطرقة</span>
+          <span class="booster-count" id="boost-hammer">3</span>
         </button>
-        <button type="button" class="booster" data-booster="spray" title="صاروخ — عمود">
-          <canvas class="booster-canvas" data-icon="spray" width="64" height="64"></canvas>
-          <span class="booster-count" id="boost-spray">3</span>
+        <button type="button" class="booster" data-booster="rocket" title="صاروخ الدواء — امسح عموداً">
+          <canvas class="booster-canvas" data-icon="rocket" width="64" height="64"></canvas>
+          <span class="booster-label">صاروخ</span>
+          <span class="booster-count" id="boost-rocket">3</span>
         </button>
-        <button type="button" class="booster" data-booster="pulse" title="قنبلة حيوية">
-          <canvas class="booster-canvas" data-icon="pulse" width="64" height="64"></canvas>
-          <span class="booster-count" id="boost-pulse">2</span>
+        <button type="button" class="booster" data-booster="bomb" title="جرعة مركّزة — انفجار 3×3">
+          <canvas class="booster-canvas" data-icon="bomb" width="64" height="64"></canvas>
+          <span class="booster-label">قنبلة</span>
+          <span class="booster-count" id="boost-bomb">2</span>
         </button>
-        <button type="button" class="booster" data-booster="shuffle" title="حقنة إعادة ترتيب">
-          <canvas class="booster-canvas" data-icon="shuffle" width="64" height="64"></canvas>
-          <span class="booster-count" id="boost-shuffle">2</span>
+        <button type="button" class="booster" data-booster="mix" title="خلط الوصفة — إعادة ترتيب">
+          <canvas class="booster-canvas" data-icon="mix" width="64" height="64"></canvas>
+          <span class="booster-label">خلط</span>
+          <span class="booster-count" id="boost-mix">2</span>
         </button>
       </footer>
     </section>

@@ -46,6 +46,148 @@ export const CAPSULE_TYPES = {
 
 export const TYPE_IDS = Object.keys(CAPSULE_TYPES);
 
+/** ثيمات العيادات — خلفيات وألوان لكل مرحلة */
+export const CLINIC_THEMES = {
+  neighborhood: {
+    id: "neighborhood",
+    name: "عيادة الحي",
+    icon: "🏥",
+    decor: ["🌿", "💊", "🩺", "❤️"],
+    colors: {
+      appGlow1: "rgba(126, 240, 216, 0.18)",
+      appGlow2: "rgba(29, 184, 166, 0.12)",
+      stageBg1: "#0a4a52",
+      stageBg2: "#062830",
+      stageBg3: "#041820",
+      accent: "#7ef0d8",
+      accentSoft: "#1db8a6",
+      hudBorder: "rgba(126, 240, 216, 0.35)",
+      frameTop: "rgba(24, 88, 82, 0.9)",
+      frameBottom: "rgba(6, 32, 36, 0.94)",
+      frameBorder: "rgba(126, 240, 216, 0.42)",
+      cellLight: "rgba(255,255,255,0.09)",
+      cellDark: "rgba(0,0,0,0.22)",
+      health: ["#ff6b5a", "#f4c15d", "#7ef0d8"],
+      storyPanel: "linear-gradient(160deg, rgba(18, 96, 90, 0.65), rgba(6, 40, 44, 0.9))",
+      canvasGlow: "rgba(30, 110, 100, 0.38)",
+    },
+  },
+  children: {
+    id: "children",
+    name: "مستوصف الأطفال",
+    icon: "🧸",
+    decor: ["🧸", "🎈", "⭐", "🌈"],
+    colors: {
+      appGlow1: "rgba(255, 183, 77, 0.2)",
+      appGlow2: "rgba(255, 105, 180, 0.12)",
+      stageBg1: "#5a3a72",
+      stageBg2: "#3a2450",
+      stageBg3: "#241535",
+      accent: "#ffd180",
+      accentSoft: "#ff80ab",
+      hudBorder: "rgba(255, 183, 77, 0.4)",
+      frameTop: "rgba(120, 70, 140, 0.88)",
+      frameBottom: "rgba(45, 25, 65, 0.94)",
+      frameBorder: "rgba(255, 183, 77, 0.45)",
+      cellLight: "rgba(255,255,255,0.11)",
+      cellDark: "rgba(0,0,0,0.2)",
+      health: ["#ff80ab", "#ffd180", "#69f0ae"],
+      storyPanel: "linear-gradient(160deg, rgba(120, 70, 140, 0.6), rgba(45, 25, 65, 0.92))",
+      canvasGlow: "rgba(180, 100, 200, 0.35)",
+    },
+  },
+  emergency: {
+    id: "emergency",
+    name: "قسم الطوارئ",
+    icon: "🚨",
+    decor: ["🚨", "⚡", "🚑", "➕"],
+    colors: {
+      appGlow1: "rgba(255, 82, 82, 0.22)",
+      appGlow2: "rgba(255, 171, 0, 0.14)",
+      stageBg1: "#6a1a1a",
+      stageBg2: "#3d0f12",
+      stageBg3: "#220608",
+      accent: "#ff8a80",
+      accentSoft: "#ffab00",
+      hudBorder: "rgba(255, 138, 128, 0.45)",
+      frameTop: "rgba(120, 30, 30, 0.9)",
+      frameBottom: "rgba(35, 8, 10, 0.95)",
+      frameBorder: "rgba(255, 171, 0, 0.5)",
+      cellLight: "rgba(255,255,255,0.08)",
+      cellDark: "rgba(0,0,0,0.28)",
+      health: ["#ff5252", "#ffab00", "#ff8a80"],
+      storyPanel: "linear-gradient(160deg, rgba(120, 30, 30, 0.65), rgba(35, 8, 10, 0.92))",
+      canvasGlow: "rgba(180, 40, 40, 0.38)",
+    },
+  },
+  research: {
+    id: "research",
+    name: "مختبر الأبحاث",
+    icon: "🔬",
+    decor: ["🔬", "🧪", "⚗️", "🧬"],
+    colors: {
+      appGlow1: "rgba(124, 77, 255, 0.2)",
+      appGlow2: "rgba(0, 229, 255, 0.12)",
+      stageBg1: "#1a3a6a",
+      stageBg2: "#0f2248",
+      stageBg3: "#081530",
+      accent: "#82b1ff",
+      accentSoft: "#18ffff",
+      hudBorder: "rgba(130, 177, 255, 0.42)",
+      frameTop: "rgba(30, 60, 120, 0.9)",
+      frameBottom: "rgba(8, 18, 45, 0.95)",
+      frameBorder: "rgba(24, 255, 255, 0.4)",
+      cellLight: "rgba(255,255,255,0.09)",
+      cellDark: "rgba(0,0,0,0.25)",
+      health: ["#536dfe", "#18ffff", "#b388ff"],
+      storyPanel: "linear-gradient(160deg, rgba(30, 60, 120, 0.65), rgba(8, 18, 45, 0.92))",
+      canvasGlow: "rgba(60, 100, 220, 0.38)",
+    },
+  },
+};
+
+/** معززات المساعدة — أسلوب Royal Match */
+export const BOOSTERS = {
+  hammer: {
+    id: "hammer",
+    boardKey: "syringe",
+    name: "مطرقة",
+    title: "مطرقة العلاج — امسح صفاً كاملاً",
+    desc: "تكسر صفاً من الكبسولات",
+  },
+  rocket: {
+    id: "rocket",
+    boardKey: "spray",
+    name: "صاروخ",
+    title: "صاروخ الدواء — امسح عموداً كاملاً",
+    desc: "يُطلق موجة تنظيف عمودية",
+  },
+  bomb: {
+    id: "bomb",
+    boardKey: "pulse",
+    name: "قنبلة",
+    title: "جرعة مركّزة — انفجار منطقة 3×3",
+    desc: "تفجير منطقة حول النقطة",
+  },
+  mix: {
+    id: "mix",
+    boardKey: "shuffle",
+    name: "خلط",
+    title: "خلط الوصفة — إعادة ترتيب اللوحة",
+    desc: "يعيد ترتيب الكبسولات",
+  },
+};
+
+export const BOOSTER_IDS = Object.keys(BOOSTERS);
+
+export function getLevelTheme(level) {
+  if (level.themeId) return CLINIC_THEMES[level.themeId] || CLINIC_THEMES.neighborhood;
+  if (level.clinic.includes("الأطفال")) return CLINIC_THEMES.children;
+  if (level.clinic.includes("الطوارئ")) return CLINIC_THEMES.emergency;
+  if (level.clinic.includes("المختبر") || level.clinic.includes("الأبحاث")) return CLINIC_THEMES.research;
+  return CLINIC_THEMES.neighborhood;
+}
+
 export const RANKS = [
   { min: 0, title: "طبيب متدرب" },
   { min: 3, title: "طبيب مقيم" },
@@ -60,6 +202,7 @@ export const RANKS = [
 export const LEVELS = [
   {
     id: 1,
+    themeId: "neighborhood",
     clinic: "عيادة الحي",
     clinicIcon: "🏥",
     patient: "سارة",
@@ -76,6 +219,7 @@ export const LEVELS = [
   },
   {
     id: 2,
+    themeId: "neighborhood",
     clinic: "عيادة الحي",
     clinicIcon: "🏥",
     patient: "يوسف",
@@ -99,6 +243,7 @@ export const LEVELS = [
   },
   {
     id: 3,
+    themeId: "children",
     clinic: "مستوصف الأطفال",
     clinicIcon: "🧸",
     patient: "ليان",
@@ -120,6 +265,7 @@ export const LEVELS = [
   },
   {
     id: 4,
+    themeId: "children",
     clinic: "مستوصف الأطفال",
     clinicIcon: "🧸",
     patient: "آدم",
@@ -141,6 +287,7 @@ export const LEVELS = [
   },
   {
     id: 5,
+    themeId: "emergency",
     clinic: "قسم الطوارئ",
     clinicIcon: "🚨",
     patient: "خالد",
@@ -168,6 +315,7 @@ export const LEVELS = [
   },
   {
     id: 6,
+    themeId: "emergency",
     clinic: "قسم الطوارئ",
     clinicIcon: "🚨",
     patient: "نورة",
@@ -193,6 +341,7 @@ export const LEVELS = [
   },
   {
     id: 7,
+    themeId: "research",
     clinic: "مختبر الأبحاث",
     clinicIcon: "🔬",
     patient: "د. هناء (زميلة)",
@@ -218,6 +367,7 @@ export const LEVELS = [
   },
   {
     id: 8,
+    themeId: "research",
     clinic: "مختبر الأبحاث",
     clinicIcon: "🔬",
     patient: "فريق المختبر",
