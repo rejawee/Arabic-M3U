@@ -1,7 +1,7 @@
 import { LEVELS, CAPSULE_TYPES, getRank, SAVE_KEY } from "./config.js";
 import { Board } from "./board.js";
 import { BoardView } from "./view.js";
-import { CapsulePowder, drawCapsule } from "./capsule.js";
+import { CapsulePowder, drawCapsule, drawBoosterIcon } from "./capsule.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -256,9 +256,9 @@ function endLevel(won) {
   const msg = $("#result-msg");
   const starsEl = $("#result-stars");
   const btnNext = $("#btn-next");
+  const eyebrow = $("#result-eyebrow");
 
   if (won) {
-    const { done, total } = state.board.goalProgress();
     let stars = 1;
     if (state.moves >= Math.floor(lv.moves * 0.25)) stars = 2;
     if (state.moves >= Math.floor(lv.moves * 0.45)) stars = 3;
@@ -275,20 +275,72 @@ function endLevel(won) {
     }
     saveProgress();
 
-    title.textContent = "نجحت العملية ✓";
-    msg.textContent = `${lv.patient} تحسّن بفضل وصفاتك. البودرة تحركت في الكبسولات — والعلاج اكتمل.`;
+    eyebrow.textContent = "LAB COMPLETE";
+    title.textContent = "أتممت مختبر الكبسولة";
+    msg.textContent = `${lv.patient} تحسّن. بودرة دقيقة وألوان بارزة تحت إضاءة المختبر — أعد التجربة لتصقل دقتك.`;
     starsEl.textContent = "★".repeat(stars) + "☆".repeat(3 - stars);
     btnNext.hidden = lv.id >= LEVELS.length;
-    btnNext.textContent = lv.id >= LEVELS.length ? "أنت عميد العيادة" : "المريض التالي";
+    btnNext.textContent = lv.id >= LEVELS.length ? "أنت عميد العيادة" : "العب من جديد — المريض التالي";
+    paintResultHero(true);
   } else {
+    eyebrow.textContent = "LAB FAILED";
     title.textContent = "لم تكتمل الوصفة";
     msg.textContent = `الحركات نفدت قبل شفاء ${lv.patient}. أعد ترتيب الكبسولات وحاول مجدداً أيها الطبيب.`;
     starsEl.textContent = "☆☆☆";
     btnNext.hidden = true;
+    paintResultHero(false);
   }
 
   $("#btn-continue").hidden = false;
   showScreen("screen-result");
+}
+
+function paintResultHero(won) {
+  const canvas = $("#result-hero");
+  if (!canvas) return;
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  const cssW = canvas.clientWidth || 360;
+  const cssH = canvas.clientHeight || 240;
+  canvas.width = Math.floor(cssW * dpr);
+  canvas.height = Math.floor(cssH * dpr);
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, cssW, cssH);
+
+  // إضاءة درامية
+  const g = ctx.createRadialGradient(cssW * 0.5, cssH * 0.55, 10, cssW * 0.5, cssH * 0.5, cssW * 0.7);
+  g.addColorStop(0, won ? "rgba(80,40,20,0.55)" : "rgba(40,20,40,0.4)");
+  g.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, cssW, cssH);
+
+  const a = new CapsulePowder("ruby", 11);
+  const b = new CapsulePowder(won ? "jade" : "violet", 22);
+  for (let i = 0; i < 30; i++) {
+    a.update(0.05);
+    b.update(0.05);
+  }
+  const size = Math.min(cssW * 0.42, cssH * 0.85);
+  drawCapsule(ctx, cssW * 0.08, cssH * 0.08, size * 0.72, size, "ruby", a, { scale: 1 });
+  drawCapsule(ctx, cssW * 0.48, cssH * 0.05, size * 0.72, size, won ? "jade" : "violet", b, {
+    scale: 1,
+  });
+}
+
+function paintBoosterIcons() {
+  document.querySelectorAll(".booster-canvas").forEach((c) => {
+    const kind = c.dataset.icon;
+    const dpr = Math.min(2, devicePixelRatio || 1);
+    const css = 48;
+    c.width = css * dpr;
+    c.height = css * dpr;
+    c.style.width = `${css}px`;
+    c.style.height = `${css}px`;
+    const ctx = c.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    drawBoosterIcon(ctx, kind, css);
+  });
 }
 
 function wireUI() {
@@ -364,7 +416,7 @@ styleFix.textContent = `.patient-avatar::after { content: attr(data-emoji); }`;
 document.head.appendChild(styleFix);
 
 wireUI();
+paintBoosterIcons();
 initHero();
 
-// خدمة محلية: إن فُتح الملف مباشرة، كل شيء يعمل كـ ES modules من خادم
 console.info("شفاء — عيادة الكبسولات جاهزة");

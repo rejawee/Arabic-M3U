@@ -165,16 +165,29 @@ export class BoardView {
     const { x, y, w, h } = this.cellAt(r, c);
     const def = CAPSULE_TYPES[type];
     const colors = def?.powder || ["#fff"];
-    for (let i = 0; i < 14; i++) {
+    for (let i = 0; i < 22; i++) {
       this.fx.push({
         x: x + w / 2,
         y: y + h / 2,
-        vx: (Math.random() - 0.5) * 220,
-        vy: (Math.random() - 0.5) * 220 - 40,
-        r: 1.5 + Math.random() * 3.5,
+        vx: (Math.random() - 0.5) * 320,
+        vy: (Math.random() - 0.5) * 320 - 60,
+        r: 1.8 + Math.random() * 4.5,
         color: colors[Math.floor(Math.random() * colors.length)],
-        life: 0.35 + Math.random() * 0.35,
-        max: 0.7,
+        life: 0.4 + Math.random() * 0.45,
+        max: 0.85,
+      });
+    }
+    // شظايا زجاجية بيضاء
+    for (let i = 0; i < 6; i++) {
+      this.fx.push({
+        x: x + w / 2,
+        y: y + h / 2,
+        vx: (Math.random() - 0.5) * 260,
+        vy: (Math.random() - 0.5) * 260 - 40,
+        r: 1 + Math.random() * 2,
+        color: "#ffffff",
+        life: 0.25 + Math.random() * 0.25,
+        max: 0.5,
       });
     }
   }

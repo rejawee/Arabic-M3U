@@ -83,23 +83,39 @@
         <div class="board-fx" id="board-fx" aria-hidden="true"></div>
       </div>
       <footer class="boosters">
-        <button type="button" class="booster" data-booster="syringe" title="حقنة صف"><span class="booster-icon">💉</span><span class="booster-count" id="boost-syringe">3</span></button>
-        <button type="button" class="booster" data-booster="spray" title="بخاخ عمود"><span class="booster-icon">🧴</span><span class="booster-count" id="boost-spray">3</span></button>
-        <button type="button" class="booster" data-booster="pulse" title="نبضة محيط"><span class="booster-icon">💊</span><span class="booster-count" id="boost-pulse">2</span></button>
-        <button type="button" class="booster" data-booster="shuffle" title="إعادة ترتيب"><span class="booster-icon">🔬</span><span class="booster-count" id="boost-shuffle">2</span></button>
+        <button type="button" class="booster" data-booster="syringe" title="مطرقة طبية — صف">
+          <canvas class="booster-canvas" data-icon="syringe" width="64" height="64"></canvas>
+          <span class="booster-count" id="boost-syringe">3</span>
+        </button>
+        <button type="button" class="booster" data-booster="spray" title="صاروخ — عمود">
+          <canvas class="booster-canvas" data-icon="spray" width="64" height="64"></canvas>
+          <span class="booster-count" id="boost-spray">3</span>
+        </button>
+        <button type="button" class="booster" data-booster="pulse" title="قنبلة حيوية">
+          <canvas class="booster-canvas" data-icon="pulse" width="64" height="64"></canvas>
+          <span class="booster-count" id="boost-pulse">2</span>
+        </button>
+        <button type="button" class="booster" data-booster="shuffle" title="حقنة إعادة ترتيب">
+          <canvas class="booster-canvas" data-icon="shuffle" width="64" height="64"></canvas>
+          <span class="booster-count" id="boost-shuffle">2</span>
+        </button>
       </footer>
     </section>
 
-    <!-- Result -->
+    <!-- Result — LAB COMPLETE -->
     <section id="screen-result" class="screen" aria-label="نتيجة المستوى">
-      <div class="result-panel">
-        <h2 id="result-title">نجحت العملية</h2>
-        <p id="result-msg"></p>
-        <div class="stars" id="result-stars" aria-label="النجوم"></div>
-        <div class="result-actions">
-          <button type="button" class="btn btn-primary" id="btn-next">المريض التالي</button>
-          <button type="button" class="btn btn-ghost" id="btn-retry">أعد المحاولة</button>
-          <button type="button" class="btn btn-ghost" id="btn-to-map">خريطة العيادات</button>
+      <div class="lab-complete">
+        <canvas id="result-hero" width="720" height="520" aria-hidden="true"></canvas>
+        <div class="lab-complete-body">
+          <p class="lab-eyebrow" id="result-eyebrow">LAB COMPLETE</p>
+          <h2 id="result-title">أتممت مختبر الكبسولة</h2>
+          <p id="result-msg"></p>
+          <div class="stars" id="result-stars" aria-label="النجوم"></div>
+          <div class="result-actions">
+            <button type="button" class="btn btn-gold" id="btn-next">المريض التالي</button>
+            <button type="button" class="btn btn-ghost" id="btn-retry">أعد التجربة</button>
+            <button type="button" class="btn btn-ghost" id="btn-to-map">خريطة العيادات</button>
+          </div>
         </div>
       </div>
     </section>
