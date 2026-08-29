@@ -20,36 +20,35 @@ export class CapsulePowder {
     this.particles = [];
     this.floaters = [];
 
-    // حبيبات كثيفة في الثلثين السفليين (مثل المرجع)
-    const dense = 90;
+    // حبيبات كبيرة وواضحة حتى على حجم بلاط اللوحة
+    const dense = 48;
     for (let i = 0; i < dense; i++) {
-      const t = Math.pow(Math.random(), 0.55);
-      const y = 0.38 + t * 0.54; // من منتصف تقريباً إلى القاع
+      const t = Math.pow(Math.random(), 0.5);
+      const y = 0.4 + t * 0.52;
       this.particles.push({
-        x: 0.14 + Math.random() * 0.72,
+        x: 0.16 + Math.random() * 0.68,
         y,
-        r: 0.014 + Math.random() * 0.028,
-        vx: (Math.random() - 0.5) * 0.01,
-        vy: (Math.random() - 0.5) * 0.008,
+        r: 0.028 + Math.random() * 0.045,
+        vx: (Math.random() - 0.5) * 0.012,
+        vy: (Math.random() - 0.5) * 0.01,
         phase: Math.random() * Math.PI * 2,
-        // 0 أبيض لامع · 1 فاتح · 2 وسط · 3 داكن
-        band: y < 0.5 ? 1 : y < 0.68 ? 2 : 3,
-        sparkle: Math.random() > 0.72,
-        twinkleSpeed: 4 + Math.random() * 6,
+        band: y < 0.52 ? 1 : y < 0.7 ? 2 : 3,
+        sparkle: Math.random() > 0.55,
+        twinkleSpeed: 3.5 + Math.random() * 7,
       });
     }
 
-    // جزيئات بيضاء/فضية عائمة في الفراغ العلوي
-    for (let i = 0; i < 18; i++) {
+    // جزيئات فضية عائمة في الفراغ العلوي الزجاجي
+    for (let i = 0; i < 14; i++) {
       this.floaters.push({
-        x: 0.2 + Math.random() * 0.6,
-        y: 0.12 + Math.random() * 0.28,
-        r: 0.01 + Math.random() * 0.018,
-        vx: (Math.random() - 0.5) * 0.02,
-        vy: (Math.random() - 0.5) * 0.015,
+        x: 0.22 + Math.random() * 0.56,
+        y: 0.1 + Math.random() * 0.26,
+        r: 0.016 + Math.random() * 0.028,
+        vx: (Math.random() - 0.5) * 0.022,
+        vy: (Math.random() - 0.5) * 0.016,
         phase: Math.random() * Math.PI * 2,
-        sparkle: Math.random() > 0.4,
-        twinkleSpeed: 5 + Math.random() * 8,
+        sparkle: true,
+        twinkleSpeed: 4 + Math.random() * 9,
       });
     }
   }
@@ -159,59 +158,55 @@ export function drawCapsule(ctx, x, y, w, h, typeId, powder, opts = {}) {
   ctx.scale(scale, scale);
   ctx.translate(-cx, -cy);
 
-  // نسب المرجع: كبسولة طولية ضيقة (~1 : 2.35)
-  const bw = w * 0.52;
-  const bh = h * 0.92;
+  // نسب المرجع: كبسولة طولية (~1 : 2.2) بعرض كافٍ لإظهار الحبيبات
+  const bw = w * 0.62;
+  const bh = h * 0.9;
   const bx = cx - bw / 2;
   const by = cy - bh / 2;
 
   // ظل أرضي ناعم
   ctx.beginPath();
-  ctx.ellipse(cx, y + h * 0.94, bw * 0.38, h * 0.045, 0, 0, Math.PI * 2);
+  ctx.ellipse(cx, y + h * 0.94, bw * 0.4, h * 0.045, 0, 0, Math.PI * 2);
   ctx.fillStyle = "rgba(0,0,0,0.22)";
   ctx.fill();
 
   // —— المحتوى الداخلي (بودرة) داخل قصّ الزجاج ——
   ctx.save();
-  pillPath(ctx, bx + bw * 0.06, by + bh * 0.035, bw * 0.88, bh * 0.93);
+  pillPath(ctx, bx + bw * 0.07, by + bh * 0.04, bw * 0.86, bh * 0.92);
   ctx.clip();
 
-  // خلفية داخلية شفافة فاتحة (فراغ علوي زجاجي)
-  const air = ctx.createLinearGradient(bx, by, bx, by + bh);
-  air.addColorStop(0, "rgba(255,255,255,0.35)");
-  air.addColorStop(0.32, "rgba(240,248,255,0.08)");
-  air.addColorStop(0.42, "rgba(0,0,0,0)");
-  air.addColorStop(1, "rgba(0,0,0,0)");
+  // فراغ علوي زجاجي شفاف واضح
+  const air = ctx.createLinearGradient(bx, by, bx, by + bh * 0.45);
+  air.addColorStop(0, "rgba(255,255,255,0.42)");
+  air.addColorStop(0.55, "rgba(230,240,250,0.12)");
+  air.addColorStop(1, "rgba(255,255,255,0)");
   ctx.fillStyle = air;
-  ctx.fillRect(bx, by, bw, bh);
+  ctx.fillRect(bx, by, bw, bh * 0.45);
 
   const powders = def.powder;
-  // كتلة بودرة كثيفة بتدرج عمودي (داكن → وسط لامع → فاتح)
-  const fillTop = by + bh * 0.36;
-  const fillH = bh * 0.58;
-  const dens = ctx.createLinearGradient(bx, fillTop, bx, fillTop + fillH);
-  dens.addColorStop(0, powders[0] + "00");
-  dens.addColorStop(0.08, powders[0] + "88");
-  dens.addColorStop(0.28, powders[1]);
-  dens.addColorStop(0.55, powders[2]);
-  dens.addColorStop(0.82, powders[3]);
-  dens.addColorStop(1, powders[4] || powders[3]);
-  ctx.fillStyle = dens;
-  // شكل قمة البودرة غير مستوٍ قليلاً
+  // ضباب خفيف خلف الحبيبات فقط (ليس كتلة صلبة)
+  const fillTop = by + bh * 0.38;
+  const mist = ctx.createLinearGradient(bx, fillTop, bx, by + bh);
+  mist.addColorStop(0, powders[1] + "33");
+  mist.addColorStop(0.35, powders[2] + "55");
+  mist.addColorStop(0.7, powders[3] + "66");
+  mist.addColorStop(1, powders[4] + "88");
+  ctx.fillStyle = mist;
   ctx.beginPath();
-  ctx.moveTo(bx + bw * 0.12, fillTop + fillH);
-  ctx.lineTo(bx + bw * 0.12, fillTop + bh * 0.04);
-  for (let i = 0; i <= 8; i++) {
-    const px = bx + bw * (0.12 + (0.76 * i) / 8);
-    const wave = Math.sin(i * 1.7 + (powder?.time || 0) * 1.5) * bh * 0.012;
+  ctx.moveTo(bx + bw * 0.1, by + bh);
+  ctx.lineTo(bx + bw * 0.1, fillTop + bh * 0.03);
+  for (let i = 0; i <= 10; i++) {
+    const px = bx + bw * (0.1 + (0.8 * i) / 10);
+    const wave = Math.sin(i * 1.4 + (powder?.time || 0) * 1.8) * bh * 0.014;
     ctx.lineTo(px, fillTop + wave);
   }
-  ctx.lineTo(bx + bw * 0.88, fillTop + fillH);
+  ctx.lineTo(bx + bw * 0.9, by + bh);
   ctx.closePath();
   ctx.fill();
 
-  // حبيبات glitter فردية
+  // طبقة حبيبات صغيرة إضافية لملمس الرمل اللامع
   if (powder) {
+    drawMicroGrit(ctx, bx, by, bw, bh, powders, powder.time || 0, typeId);
     drawGrainList(ctx, powder.particles, bx, by, bw, bh, powders, powder.time, alpha, false);
     drawGrainList(ctx, powder.floaters, bx, by, bw, bh, powders, powder.time, alpha, true);
   }
@@ -311,40 +306,64 @@ export function drawCapsule(ctx, x, y, w, h, typeId, powder, opts = {}) {
   ctx.restore();
 }
 
+function drawMicroGrit(ctx, bx, by, bw, bh, powders, time, typeId) {
+  // حبيبات رملية ثابتة الشكل (seed من النوع) لملمس المرجع
+  let seed = 0;
+  for (let i = 0; i < typeId.length; i++) seed = (seed * 31 + typeId.charCodeAt(i)) >>> 0;
+  const rand = () => {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed / 0xffffffff;
+  };
+  const n = 70;
+  for (let i = 0; i < n; i++) {
+    const y = 0.42 + rand() * 0.5;
+    const x = 0.14 + rand() * 0.72;
+    const px = bx + x * bw;
+    const py = by + y * bh + Math.sin(time * 2 + i) * 0.4;
+    const pr = Math.max(0.55, (0.01 + rand() * 0.02) * Math.min(bw, bh));
+    const band = y < 0.55 ? 1 : y < 0.72 ? 2 : 3;
+    ctx.beginPath();
+    ctx.arc(px, py, pr, 0, Math.PI * 2);
+    ctx.fillStyle = powders[band] || powders[2];
+    ctx.globalAlpha = 0.85;
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
 function drawGrainList(ctx, list, bx, by, bw, bh, powders, time, alpha, isFloater) {
   if (!list) return;
   for (const p of list) {
     const px = bx + p.x * bw;
     const py = by + p.y * bh;
-    const pr = Math.max(0.7, p.r * Math.min(bw, bh) * 1.35);
+    const pr = Math.max(1.1, p.r * Math.min(bw, bh) * 1.5);
 
     let col;
     if (isFloater) {
-      col = powders[0]; // أبيض/فضي
+      col = powders[0];
     } else {
       col = powders[p.band] || powders[2];
     }
 
-    // حبة glitter
     ctx.beginPath();
     ctx.arc(px, py, pr, 0, Math.PI * 2);
-    const g = ctx.createRadialGradient(px - pr * 0.35, py - pr * 0.35, 0, px, py, pr);
-    g.addColorStop(0, isFloater ? "#ffffff" : powders[0]);
-    g.addColorStop(0.45, col);
+    const g = ctx.createRadialGradient(px - pr * 0.4, py - pr * 0.4, 0, px, py, pr);
+    g.addColorStop(0, "#ffffff");
+    g.addColorStop(0.35, isFloater ? "#ffffff" : powders[0]);
+    g.addColorStop(0.7, col);
     g.addColorStop(1, powders[4] || powders[3]);
     ctx.fillStyle = g;
     ctx.fill();
 
-    // وميض نجمي (starburst) كما في المرجع
     if (p.sparkle) {
-      const tw = 0.35 + 0.65 * Math.abs(Math.sin(time * p.twinkleSpeed + p.phase));
+      const tw = 0.4 + 0.6 * Math.abs(Math.sin(time * p.twinkleSpeed + p.phase));
       ctx.save();
       ctx.globalAlpha = alpha * tw;
       ctx.translate(px, py);
-      ctx.rotate(p.phase);
-      const arm = pr * (isFloater ? 2.8 : 2.2);
+      ctx.rotate(p.phase * 0.5);
+      const arm = pr * (isFloater ? 3.2 : 2.6);
       ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = Math.max(0.6, pr * 0.35);
+      ctx.lineWidth = Math.max(0.7, pr * 0.4);
       ctx.lineCap = "round";
       ctx.beginPath();
       ctx.moveTo(-arm, 0);
@@ -352,13 +371,12 @@ function drawGrainList(ctx, list, bx, by, bw, bh, powders, time, alpha, isFloate
       ctx.moveTo(0, -arm);
       ctx.lineTo(0, arm);
       ctx.stroke();
-      // محور قطري أخف
-      ctx.globalAlpha = alpha * tw * 0.55;
+      ctx.globalAlpha = alpha * tw * 0.5;
       ctx.beginPath();
-      ctx.moveTo(-arm * 0.65, -arm * 0.65);
-      ctx.lineTo(arm * 0.65, arm * 0.65);
-      ctx.moveTo(-arm * 0.65, arm * 0.65);
-      ctx.lineTo(arm * 0.65, -arm * 0.65);
+      ctx.moveTo(-arm * 0.7, -arm * 0.7);
+      ctx.lineTo(arm * 0.7, arm * 0.7);
+      ctx.moveTo(-arm * 0.7, arm * 0.7);
+      ctx.lineTo(arm * 0.7, -arm * 0.7);
       ctx.stroke();
       ctx.restore();
     }
