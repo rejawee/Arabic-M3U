@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a3d4a" />
+  <title>شفاء — عيادة الكبسولات</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=El+Messiri:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Hero / Title -->
+    <section id="screen-title" class="screen active" aria-label="الشاشة الرئيسية">
+      <div class="hero-bg" aria-hidden="true">
+        <canvas id="hero-capsules" width="900" height="1600"></canvas>
+        <div class="hero-veil"></div>
+      </div>
+      <header class="hero-brand">
+        <p class="hero-eyebrow">عيادة الكبسولات الفاخرة</p>
+        <h1 class="brand">شفاء</h1>
+        <p class="hero-tagline">أنت الطبيب. الكبسولات دوائك. المرضى ينتظرون الأمل.</p>
+        <div class="hero-cta">
+          <button type="button" class="btn btn-primary" id="btn-start">ابدأ العيادة</button>
+          <button type="button" class="btn btn-ghost" id="btn-continue" hidden>متابعة العلاج</button>
+        </div>
+      </header>
+      <footer class="hero-foot">
+        <span>بودرة متحركة · مطابقة ثلاثية · قصة طبية متكاملة</span>
+      </footer>
+    </section>
+
+    <!-- Map / Clinics -->
+    <section id="screen-map" class="screen" aria-label="خريطة العيادات">
+      <header class="topbar">
+        <button type="button" class="icon-btn" id="btn-map-home" title="الرئيسية">⌂</button>
+        <div class="topbar-title">
+          <h2>مسار الشفاء</h2>
+          <p id="doctor-rank">طبيب مقيم</p>
+        </div>
+        <div class="stat-pill" id="map-stars" title="نجوم">★ 0</div>
+      </header>
+      <div class="map-scroll" id="map-scroll">
+        <div class="map-path" id="map-path"></div>
+      </div>
+    </section>
+
+    <!-- Story intro before level -->
+    <section id="screen-story" class="screen" aria-label="قصة المستوى">
+      <div class="story-panel">
+        <div class="story-clinic" id="story-clinic">عيادة الحي</div>
+        <div class="patient-card">
+          <div class="patient-avatar" id="patient-avatar" aria-hidden="true"></div>
+          <div class="patient-info">
+            <h2 id="patient-name">مريض</h2>
+            <p id="patient-condition">الحالة</p>
+          </div>
+        </div>
+        <p class="story-text" id="story-text"></p>
+        <div class="objectives" id="story-objectives"></div>
+        <button type="button" class="btn btn-primary" id="btn-play-level">ادخل غرفة العلاج</button>
+        <button type="button" class="btn btn-ghost" id="btn-story-back">رجوع</button>
+      </div>
+    </section>
+
+    <!-- Gameplay -->
+    <section id="screen-game" class="screen" aria-label="لوحة اللعب">
+      <header class="game-hud">
+        <button type="button" class="icon-btn" id="btn-pause" title="إيقاف">❚❚</button>
+        <div class="hud-patient">
+          <span class="hud-label" id="hud-patient">المريض</span>
+          <div class="health-bar"><div class="health-fill" id="health-fill"></div></div>
+        </div>
+        <div class="hud-stats">
+          <div class="hud-stat"><span>حركات</span><strong id="hud-moves">20</strong></div>
+          <div class="hud-stat"><span>هدف</span><strong id="hud-goal">0/0</strong></div>
+        </div>
+      </header>
+      <div class="board-wrap">
+        <canvas id="board" width="720" height="720"></canvas>
+        <div class="board-fx" id="board-fx" aria-hidden="true"></div>
+      </div>
+      <footer class="boosters">
+        <button type="button" class="booster" data-booster="syringe" title="حقنة صف"><span class="booster-icon">💉</span><span class="booster-count" id="boost-syringe">3</span></button>
+        <button type="button" class="booster" data-booster="spray" title="بخاخ عمود"><span class="booster-icon">🧴</span><span class="booster-count" id="boost-spray">3</span></button>
+        <button type="button" class="booster" data-booster="pulse" title="نبضة محيط"><span class="booster-icon">💊</span><span class="booster-count" id="boost-pulse">2</span></button>
+        <button type="button" class="booster" data-booster="shuffle" title="إعادة ترتيب"><span class="booster-icon">🔬</span><span class="booster-count" id="boost-shuffle">2</span></button>
+      </footer>
+    </section>
+
+    <!-- Result -->
+    <section id="screen-result" class="screen" aria-label="نتيجة المستوى">
+      <div class="result-panel">
+        <h2 id="result-title">نجحت العملية</h2>
+        <p id="result-msg"></p>
+        <div class="stars" id="result-stars" aria-label="النجوم"></div>
+        <div class="result-actions">
+          <button type="button" class="btn btn-primary" id="btn-next">المريض التالي</button>
+          <button type="button" class="btn btn-ghost" id="btn-retry">أعد المحاولة</button>
+          <button type="button" class="btn btn-ghost" id="btn-to-map">خريطة العيادات</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pause overlay -->
+    <div id="overlay-pause" class="overlay" hidden>
+      <div class="overlay-card">
+        <h3>توقف العلاج مؤقتاً</h3>
+        <button type="button" class="btn btn-primary" id="btn-resume">متابعة</button>
+        <button type="button" class="btn btn-ghost" id="btn-quit-level">مغادرة الغرفة</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
