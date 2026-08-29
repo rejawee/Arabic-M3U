@@ -124,8 +124,8 @@ export function drawCapsule(ctx, x, y, w, h, typeId, powder, opts = {}) {
   ctx.scale(scale, scale);
   ctx.translate(-cx, -cy);
 
-  const bw = w * 0.7;
-  const bh = h * 0.88;
+  const bw = w * 0.56;
+  const bh = h * 0.9;
   const bx = cx - bw / 2;
   const by = cy - bh / 2;
   const p = def.powder;
