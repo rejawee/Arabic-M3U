@@ -162,7 +162,7 @@ function openStory(index) {
     const def = CAPSULE_TYPES[g.type];
     const chip = document.createElement("div");
     chip.className = "obj-chip";
-    chip.innerHTML = `<span class="obj-swatch" style="background:linear-gradient(135deg,${def.shell[0]},${def.shell[1]})"></span>×${g.count} ${def.name}`;
+    chip.innerHTML = `<span class="obj-swatch" style="background:linear-gradient(180deg,${def.powder[1]},${def.powder[3]})"></span>×${g.count} ${def.name}`;
     objs.appendChild(chip);
   });
   const movesChip = document.createElement("div");
