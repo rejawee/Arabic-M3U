@@ -1,46 +1,48 @@
-/** ألوان الكبسولات — تدرج بودرة فاخر */
+/** ألوان الكبسولات — تدرج بودرة glitter فاخر (أبيض → لون → داكن) مثل المرجع */
 export const CAPSULE_TYPES = {
   ruby: {
     id: "ruby",
     name: "ياقوتية",
-    shell: ["#ff8a7a", "#e83d4a"],
-    powder: ["#ffd0c8", "#ff5a4e", "#b01828", "#4a0610"],
-    glow: "rgba(255, 90, 78, 0.45)",
+    shell: ["#ffffff", "#e8eef2"],
+    // [أبيض لامع، وردي فاتح، أحمر، قرمزي، كحلي داكن]
+    powder: ["#fff5f2", "#ff8a7a", "#e83545", "#8a1020", "#2a0610"],
+    glow: "rgba(255, 90, 78, 0.5)",
   },
   azure: {
     id: "azure",
     name: "سماوية",
-    shell: ["#7ed8ff", "#1a7fd4"],
-    powder: ["#e0f6ff", "#4db8ff", "#1560a8", "#062848"],
-    glow: "rgba(77, 184, 255, 0.45)",
+    shell: ["#ffffff", "#e8eef2"],
+    powder: ["#f2f9ff", "#5ec8ff", "#1a7fd4", "#0a3a78", "#041828"],
+    glow: "rgba(77, 184, 255, 0.5)",
   },
   jade: {
     id: "jade",
     name: "زُمرّدية",
-    shell: ["#8ef0c8", "#1aad7a"],
-    powder: ["#d8ffe8", "#3dd68c", "#0e7a52", "#043828"],
-    glow: "rgba(61, 214, 140, 0.45)",
+    shell: ["#ffffff", "#e8eef2"],
+    powder: ["#f0fff6", "#5ef0b0", "#12a868", "#065838", "#022018"],
+    glow: "rgba(61, 214, 140, 0.5)",
   },
   amber: {
     id: "amber",
     name: "ذهبية",
-    shell: ["#ffe08a", "#e8a020"],
-    powder: ["#fff3c8", "#f0b430", "#b07010", "#4a3008"],
-    glow: "rgba(240, 180, 48, 0.45)",
+    shell: ["#ffffff", "#e8eef2"],
+    powder: ["#fffaf0", "#ffd060", "#e89810", "#8a5008", "#2a1804"],
+    glow: "rgba(240, 180, 48, 0.5)",
   },
   violet: {
     id: "violet",
     name: "بنفسجية",
-    shell: ["#d4a8ff", "#7a3dd4"],
-    powder: ["#f0e0ff", "#a060f0", "#5020a0", "#200848"],
-    glow: "rgba(160, 96, 240, 0.4)",
+    shell: ["#ffffff", "#e8eef2"],
+    powder: ["#faf2ff", "#c48aff", "#7a35d4", "#3a1078", "#140428"],
+    glow: "rgba(160, 96, 240, 0.45)",
   },
   cyan: {
     id: "cyan",
     name: "فيروزية",
-    shell: ["#9ef4f0", "#18b8b0"],
-    powder: ["#e8fffe", "#40e0d8", "#0e7878", "#043838"],
-    glow: "rgba(64, 224, 216, 0.45)",
+    shell: ["#ffffff", "#e8eef2"],
+    // مطابق تقريباً لمرجع الصورة: فضي → فيروزي → كحلي
+    powder: ["#f5fffe", "#40e8e0", "#10a8b8", "#0a4868", "#041828"],
+    glow: "rgba(64, 224, 216, 0.5)",
   },
 };
 

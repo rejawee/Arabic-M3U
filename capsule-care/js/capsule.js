@@ -1,14 +1,15 @@
+/**
+ * كبسولة زجاجية شفافة فائقة الجودة — مطابقة للمرجع الفوتوغرافي
+ * غلاف كريستالي شفاف + خط التحام المنتصف + بودرة glitter متحركة بتدرج
+ */
 import { CAPSULE_TYPES } from "./config.js";
 
-/**
- * نظام بودرة فاخر داخل الكبسولة الزجاجية
- * جسيمات دقيقة تتحرك وتتساقط بحركة فيزيائية خفيفة
- */
 export class CapsulePowder {
   constructor(typeId, seed = Math.random() * 1000) {
     this.typeId = typeId;
     this.seed = seed;
     this.particles = [];
+    this.floaters = [];
     this.time = seed;
     this._initParticles();
   }
@@ -16,23 +17,39 @@ export class CapsulePowder {
   _initParticles() {
     const def = CAPSULE_TYPES[this.typeId];
     if (!def) return;
-    const n = 68;
     this.particles = [];
-    for (let i = 0; i < n; i++) {
-      // كثافة أعلى في الأسفل كتدرج البودرة الفاخرة (مرجع الزجاج الشفاف)
-      const yBias = 0.42 + Math.pow(Math.random(), 0.45) * 0.5;
-      const sparse = Math.random() > 0.78;
+    this.floaters = [];
+
+    // حبيبات كثيفة في الثلثين السفليين (مثل المرجع)
+    const dense = 90;
+    for (let i = 0; i < dense; i++) {
+      const t = Math.pow(Math.random(), 0.55);
+      const y = 0.38 + t * 0.54; // من منتصف تقريباً إلى القاع
       this.particles.push({
-        x: 0.18 + Math.random() * 0.64,
-        y: sparse ? 0.18 + Math.random() * 0.28 : yBias,
-        r: sparse
-          ? 0.012 + Math.random() * 0.016
-          : 0.016 + Math.random() * 0.032,
-        vx: (Math.random() - 0.5) * 0.014,
-        vy: (Math.random() - 0.5) * 0.01,
+        x: 0.14 + Math.random() * 0.72,
+        y,
+        r: 0.014 + Math.random() * 0.028,
+        vx: (Math.random() - 0.5) * 0.01,
+        vy: (Math.random() - 0.5) * 0.008,
         phase: Math.random() * Math.PI * 2,
-        colorIdx: sparse ? 0 : Math.min(3, Math.floor(yBias * 4.5)),
-        sparkle: sparse || Math.random() > 0.88,
+        // 0 أبيض لامع · 1 فاتح · 2 وسط · 3 داكن
+        band: y < 0.5 ? 1 : y < 0.68 ? 2 : 3,
+        sparkle: Math.random() > 0.72,
+        twinkleSpeed: 4 + Math.random() * 6,
+      });
+    }
+
+    // جزيئات بيضاء/فضية عائمة في الفراغ العلوي
+    for (let i = 0; i < 18; i++) {
+      this.floaters.push({
+        x: 0.2 + Math.random() * 0.6,
+        y: 0.12 + Math.random() * 0.28,
+        r: 0.01 + Math.random() * 0.018,
+        vx: (Math.random() - 0.5) * 0.02,
+        vy: (Math.random() - 0.5) * 0.015,
+        phase: Math.random() * Math.PI * 2,
+        sparkle: Math.random() > 0.4,
+        twinkleSpeed: 5 + Math.random() * 8,
       });
     }
   }
@@ -43,70 +60,83 @@ export class CapsulePowder {
     this._initParticles();
   }
 
-  /** اهتزاز عند المطابقة / السقوط */
   shake(intensity = 1) {
     for (const p of this.particles) {
-      p.vx += (Math.random() - 0.5) * 0.08 * intensity;
-      p.vy += (Math.random() - 0.5) * 0.06 * intensity - 0.02 * intensity;
+      p.vx += (Math.random() - 0.5) * 0.1 * intensity;
+      p.vy += (Math.random() - 0.5) * 0.08 * intensity - 0.03 * intensity;
+    }
+    for (const p of this.floaters) {
+      p.vx += (Math.random() - 0.5) * 0.12 * intensity;
+      p.vy += (Math.random() - 0.5) * 0.1 * intensity;
     }
   }
 
   update(dt) {
     this.time += dt;
-    const g = 0.62;
-    for (const p of this.particles) {
-      p.vx += Math.sin(this.time * 2.4 + p.phase) * 0.005 * dt;
-      p.vy += g * dt * 0.09;
+    this._integrate(this.particles, dt, 0.72);
+    this._integrate(this.floaters, dt, 0.22);
+  }
+
+  _integrate(list, dt, settleY) {
+    const g = 0.55;
+    for (const p of list) {
+      p.vx += Math.sin(this.time * 2.2 + p.phase) * 0.006 * dt;
+      p.vy += g * dt * (list === this.floaters ? 0.035 : 0.1);
       p.x += p.vx * dt;
       p.y += p.vy * dt;
-      p.vx *= 0.96;
-      p.vy *= 0.935;
+      p.vx *= 0.955;
+      p.vy *= 0.93;
 
-      // حدود شكل الكبسولة الطولية (stadium)
-      const cx = 0.5;
-      const halfW = 0.36;
-      if (p.x < cx - halfW) {
-        p.x = cx - halfW;
-        p.vx = Math.abs(p.vx) * 0.4;
-      }
-      if (p.x > cx + halfW) {
-        p.x = cx + halfW;
-        p.vx = -Math.abs(p.vx) * 0.4;
-      }
-      // أطراف نصف دائرية
-      if (p.y < 0.16) {
-        p.y = 0.16 + Math.random() * 0.01;
-        p.vy = Math.abs(p.vy) * 0.25;
-      }
-      if (p.y > 0.9) {
-        p.y = 0.9;
-        p.vy *= -0.15;
-        p.vx += (Math.random() - 0.5) * 0.02;
-      }
-      const tipR = 0.36;
-      if (p.y < 0.16 + tipR * 0.55) {
-        const localY = (0.16 + tipR * 0.55 - p.y) / (tipR * 0.55);
-        const maxX = tipR * Math.sqrt(Math.max(0, 1 - localY * localY));
-        if (Math.abs(p.x - cx) > maxX) {
-          p.x = cx + Math.sign(p.x - cx) * maxX * 0.95;
-          p.vx *= -0.3;
-        }
-      }
-      if (p.y > 0.9 - tipR * 0.55) {
-        const localY = (p.y - (0.9 - tipR * 0.55)) / (tipR * 0.55);
-        const maxX = tipR * Math.sqrt(Math.max(0, 1 - localY * localY));
-        if (Math.abs(p.x - cx) > maxX) {
-          p.x = cx + Math.sign(p.x - cx) * maxX * 0.95;
-          p.vx *= -0.3;
-        }
+      // حدود جسم الكبسولة (stadium)
+      constrainInPill(p);
+
+      // استقرار نحو مستوى البودرة
+      if (list === this.particles && p.y < settleY - 0.05) {
+        p.vy += 0.15 * dt;
       }
     }
   }
 }
 
+function constrainInPill(p) {
+  const cx = 0.5;
+  const halfW = 0.38;
+  const top = 0.08;
+  const bot = 0.93;
+
+  if (p.y < top) {
+    p.y = top;
+    p.vy = Math.abs(p.vy) * 0.2;
+  }
+  if (p.y > bot) {
+    p.y = bot;
+    p.vy *= -0.12;
+    p.vx += (Math.random() - 0.5) * 0.015;
+  }
+
+  // نصف دوائر الطرفين
+  const r = halfW;
+  let maxX = halfW;
+  if (p.y < top + r) {
+    const ly = 1 - (p.y - top) / r;
+    maxX = r * Math.sqrt(Math.max(0, 1 - ly * ly));
+  } else if (p.y > bot - r) {
+    const ly = (p.y - (bot - r)) / r;
+    maxX = r * Math.sqrt(Math.max(0, 1 - ly * ly));
+  }
+
+  if (p.x < cx - maxX) {
+    p.x = cx - maxX;
+    p.vx = Math.abs(p.vx) * 0.35;
+  }
+  if (p.x > cx + maxX) {
+    p.x = cx + maxX;
+    p.vx = -Math.abs(p.vx) * 0.35;
+  }
+}
+
 /**
- * رسم كبسولة زجاجية فائقة الجودة مع بودرة متحركة
- * شكل كبسولة طبية حقيقية (أطول من عرضها) داخل الخلية
+ * رسم كبسولة كريستالية شفافة مطابقة للمرجع
  */
 export function drawCapsule(ctx, x, y, w, h, typeId, powder, opts = {}) {
   const def = CAPSULE_TYPES[typeId];
@@ -122,136 +152,227 @@ export function drawCapsule(ctx, x, y, w, h, typeId, powder, opts = {}) {
 
   ctx.save();
   ctx.globalAlpha = alpha;
+
   const cx = x + w / 2;
   const cy = y + h / 2;
   ctx.translate(cx, cy);
   ctx.scale(scale, scale);
   ctx.translate(-cx, -cy);
 
-  // كبسولة طولية داخل المربع
-  const bw = w * 0.58;
-  const bh = h * 0.88;
+  // نسب المرجع: كبسولة طولية ضيقة (~1 : 2.35)
+  const bw = w * 0.52;
+  const bh = h * 0.92;
   const bx = cx - bw / 2;
   const by = cy - bh / 2;
-  const br = bw / 2;
 
-  // ظل ناعم
+  // ظل أرضي ناعم
   ctx.beginPath();
-  ctx.ellipse(cx, y + h * 0.92, bw * 0.42, h * 0.06, 0, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(0,0,0,0.32)";
+  ctx.ellipse(cx, y + h * 0.94, bw * 0.38, h * 0.045, 0, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(0,0,0,0.22)";
   ctx.fill();
 
-  // غلاف زجاجي شفاف ملون
-  pillPath(ctx, bx, by, bw, bh);
-  const shell = ctx.createLinearGradient(bx, by, bx + bw, by + bh);
-  shell.addColorStop(0, def.shell[0]);
-  shell.addColorStop(0.5, def.shell[1]);
-  shell.addColorStop(1, def.shell[0]);
-  ctx.fillStyle = shell;
-  ctx.globalAlpha = alpha * 0.28;
-  ctx.fill();
-  ctx.globalAlpha = alpha;
-
-  // بودرة داخل الزجاج
+  // —— المحتوى الداخلي (بودرة) داخل قصّ الزجاج ——
   ctx.save();
-  pillPath(ctx, bx + bw * 0.07, by + bh * 0.04, bw * 0.86, bh * 0.92);
+  pillPath(ctx, bx + bw * 0.06, by + bh * 0.035, bw * 0.88, bh * 0.93);
   ctx.clip();
 
+  // خلفية داخلية شفافة فاتحة (فراغ علوي زجاجي)
+  const air = ctx.createLinearGradient(bx, by, bx, by + bh);
+  air.addColorStop(0, "rgba(255,255,255,0.35)");
+  air.addColorStop(0.32, "rgba(240,248,255,0.08)");
+  air.addColorStop(0.42, "rgba(0,0,0,0)");
+  air.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = air;
+  ctx.fillRect(bx, by, bw, bh);
+
   const powders = def.powder;
-  // فراغ علوي لامع + قاع كثيف (مثل المرجع الفاخر)
-  const inner = ctx.createLinearGradient(bx, by, bx, by + bh);
-  inner.addColorStop(0, "rgba(255,255,255,0.22)");
-  inner.addColorStop(0.28, "rgba(255,255,255,0.06)");
-  inner.addColorStop(0.45, powders[1] + "55");
-  inner.addColorStop(0.7, powders[2]);
-  inner.addColorStop(1, powders[3]);
-  ctx.fillStyle = inner;
-  ctx.fillRect(bx, by, bw, bh);
-
-  const mist = ctx.createRadialGradient(cx, by + bh * 0.78, 1, cx, by + bh * 0.7, bw * 0.7);
-  mist.addColorStop(0, powders[1]);
-  mist.addColorStop(0.55, powders[2] + "dd");
-  mist.addColorStop(1, "transparent");
-  ctx.fillStyle = mist;
-  ctx.fillRect(bx, by, bw, bh);
-
-  if (powder?.particles) {
-    for (const p of powder.particles) {
-      const px = bx + p.x * bw;
-      const py = by + p.y * bh;
-      const pr = Math.max(0.8, p.r * Math.min(bw, bh) * 1.15);
-      const col = powders[p.colorIdx] || powders[1];
-
-      if (p.sparkle) {
-        const twinkle = 0.5 + 0.5 * Math.sin(powder.time * 7 + p.phase);
-        ctx.globalAlpha = alpha * twinkle * 0.95;
-        ctx.fillStyle = "#ffffff";
-        ctx.beginPath();
-        ctx.arc(px, py, pr * 0.55, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.globalAlpha = alpha;
-      }
-
-      ctx.beginPath();
-      ctx.arc(px, py, pr, 0, Math.PI * 2);
-      const pg = ctx.createRadialGradient(px - pr * 0.35, py - pr * 0.35, 0, px, py, pr);
-      pg.addColorStop(0, powders[0]);
-      pg.addColorStop(0.5, col);
-      pg.addColorStop(1, powders[3]);
-      ctx.fillStyle = pg;
-      ctx.fill();
-    }
-  }
-  ctx.restore();
-
-  // إطار زجاجي
-  pillPath(ctx, bx, by, bw, bh);
-  ctx.strokeStyle = "rgba(255,255,255,0.65)";
-  ctx.lineWidth = Math.max(1.8, w * 0.028);
-  ctx.stroke();
-
-  pillPath(ctx, bx, by, bw, bh);
-  ctx.strokeStyle = def.shell[1] + "aa";
-  ctx.lineWidth = Math.max(1, w * 0.014);
-  ctx.stroke();
-
-  // لمعان علوي زجاجي
+  // كتلة بودرة كثيفة بتدرج عمودي (داكن → وسط لامع → فاتح)
+  const fillTop = by + bh * 0.36;
+  const fillH = bh * 0.58;
+  const dens = ctx.createLinearGradient(bx, fillTop, bx, fillTop + fillH);
+  dens.addColorStop(0, powders[0] + "00");
+  dens.addColorStop(0.08, powders[0] + "88");
+  dens.addColorStop(0.28, powders[1]);
+  dens.addColorStop(0.55, powders[2]);
+  dens.addColorStop(0.82, powders[3]);
+  dens.addColorStop(1, powders[4] || powders[3]);
+  ctx.fillStyle = dens;
+  // شكل قمة البودرة غير مستوٍ قليلاً
   ctx.beginPath();
-  ctx.ellipse(cx - bw * 0.12, by + bh * 0.2, bw * 0.14, bh * 0.14, -0.35, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(255,255,255,0.5)";
+  ctx.moveTo(bx + bw * 0.12, fillTop + fillH);
+  ctx.lineTo(bx + bw * 0.12, fillTop + bh * 0.04);
+  for (let i = 0; i <= 8; i++) {
+    const px = bx + bw * (0.12 + (0.76 * i) / 8);
+    const wave = Math.sin(i * 1.7 + (powder?.time || 0) * 1.5) * bh * 0.012;
+    ctx.lineTo(px, fillTop + wave);
+  }
+  ctx.lineTo(bx + bw * 0.88, fillTop + fillH);
+  ctx.closePath();
   ctx.fill();
 
+  // حبيبات glitter فردية
+  if (powder) {
+    drawGrainList(ctx, powder.particles, bx, by, bw, bh, powders, powder.time, alpha, false);
+    drawGrainList(ctx, powder.floaters, bx, by, bw, bh, powders, powder.time, alpha, true);
+  }
+
+  ctx.restore();
+
+  // —— الغلاف الزجاجي الكريستالي الشفاف (بدون لون غلاف) ——
+  // انحناء حافة خفيف جداً بلون أزرق-أبيض
+  pillPath(ctx, bx, by, bw, bh);
+  const glassTint = ctx.createLinearGradient(bx, by, bx + bw, by);
+  glassTint.addColorStop(0, "rgba(180, 210, 230, 0.18)");
+  glassTint.addColorStop(0.45, "rgba(255, 255, 255, 0.05)");
+  glassTint.addColorStop(1, "rgba(160, 195, 220, 0.16)");
+  ctx.fillStyle = glassTint;
+  ctx.fill();
+
+  // حد زجاجي خارجي حاد
+  pillPath(ctx, bx, by, bw, bh);
+  ctx.strokeStyle = "rgba(255,255,255,0.85)";
+  ctx.lineWidth = Math.max(1.6, w * 0.03);
+  ctx.stroke();
+
+  // حد داخلي رمادي-أزرق خفيف للعمق
+  pillPath(ctx, bx + 1.2, by + 1.2, bw - 2.4, bh - 2.4);
+  ctx.strokeStyle = "rgba(120, 150, 175, 0.35)";
+  ctx.lineWidth = Math.max(0.8, w * 0.012);
+  ctx.stroke();
+
+  // خط التحام المنتصف (seam) — ميزة المرجع الأساسية
+  const seamY = cy;
+  ctx.save();
+  pillPath(ctx, bx, by, bw, bh);
+  ctx.clip();
   ctx.beginPath();
-  ctx.moveTo(bx + bw * 0.22, by + bh * 0.18);
-  ctx.quadraticCurveTo(bx + bw * 0.1, cy, bx + bw * 0.24, by + bh * 0.82);
-  ctx.strokeStyle = "rgba(255,255,255,0.4)";
-  ctx.lineWidth = Math.max(1.2, w * 0.022);
+  ctx.moveTo(bx + bw * 0.08, seamY);
+  ctx.lineTo(bx + bw * 0.92, seamY);
+  ctx.strokeStyle = "rgba(90, 120, 145, 0.45)";
+  ctx.lineWidth = Math.max(1, w * 0.018);
+  ctx.stroke();
+  // لمعان رفيع فوق الخط
+  ctx.beginPath();
+  ctx.moveTo(bx + bw * 0.12, seamY - 1);
+  ctx.lineTo(bx + bw * 0.88, seamY - 1);
+  ctx.strokeStyle = "rgba(255,255,255,0.35)";
+  ctx.lineWidth = 0.8;
+  ctx.stroke();
+  ctx.restore();
+
+  // تمييز specular علوي أيسر (مثل المرجع)
+  ctx.beginPath();
+  ctx.ellipse(
+    cx - bw * 0.14,
+    by + bh * 0.18,
+    bw * 0.13,
+    bh * 0.11,
+    -0.45,
+    0,
+    Math.PI * 2
+  );
+  ctx.fillStyle = "rgba(255,255,255,0.72)";
+  ctx.fill();
+
+  // نقطة لمعان صغيرة أعلى
+  ctx.beginPath();
+  ctx.ellipse(cx + bw * 0.08, by + bh * 0.1, bw * 0.06, bh * 0.035, 0.2, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(255,255,255,0.55)";
+  ctx.fill();
+
+  // شريط لمعان جانبي طويل
+  ctx.beginPath();
+  ctx.moveTo(bx + bw * 0.18, by + bh * 0.16);
+  ctx.quadraticCurveTo(bx + bw * 0.06, cy, bx + bw * 0.2, by + bh * 0.84);
+  ctx.strokeStyle = "rgba(255,255,255,0.55)";
+  ctx.lineWidth = Math.max(1.4, w * 0.024);
   ctx.lineCap = "round";
+  ctx.stroke();
+
+  // انعكاس حافة يمنى رفيع
+  ctx.beginPath();
+  ctx.moveTo(bx + bw * 0.82, by + bh * 0.22);
+  ctx.quadraticCurveTo(bx + bw * 0.94, cy, bx + bw * 0.8, by + bh * 0.78);
+  ctx.strokeStyle = "rgba(200, 220, 235, 0.35)";
+  ctx.lineWidth = Math.max(1, w * 0.014);
   ctx.stroke();
 
   if (selected || highlight > 0) {
     pillPath(ctx, bx - 3, by - 3, bw + 6, bh + 6);
     ctx.strokeStyle = def.glow;
-    ctx.lineWidth = 3.5 + highlight * 2;
+    ctx.lineWidth = 3.2 + highlight * 2;
     ctx.stroke();
   }
 
   if (special) {
-    drawSpecialBadge(ctx, cx, cy, w * 0.2, special);
+    drawSpecialBadge(ctx, cx, cy, w * 0.18, special);
   }
 
   ctx.restore();
 }
 
-/** مسار كبسولة طبية (نصف دائرة أعلى وأسفل) */
+function drawGrainList(ctx, list, bx, by, bw, bh, powders, time, alpha, isFloater) {
+  if (!list) return;
+  for (const p of list) {
+    const px = bx + p.x * bw;
+    const py = by + p.y * bh;
+    const pr = Math.max(0.7, p.r * Math.min(bw, bh) * 1.35);
+
+    let col;
+    if (isFloater) {
+      col = powders[0]; // أبيض/فضي
+    } else {
+      col = powders[p.band] || powders[2];
+    }
+
+    // حبة glitter
+    ctx.beginPath();
+    ctx.arc(px, py, pr, 0, Math.PI * 2);
+    const g = ctx.createRadialGradient(px - pr * 0.35, py - pr * 0.35, 0, px, py, pr);
+    g.addColorStop(0, isFloater ? "#ffffff" : powders[0]);
+    g.addColorStop(0.45, col);
+    g.addColorStop(1, powders[4] || powders[3]);
+    ctx.fillStyle = g;
+    ctx.fill();
+
+    // وميض نجمي (starburst) كما في المرجع
+    if (p.sparkle) {
+      const tw = 0.35 + 0.65 * Math.abs(Math.sin(time * p.twinkleSpeed + p.phase));
+      ctx.save();
+      ctx.globalAlpha = alpha * tw;
+      ctx.translate(px, py);
+      ctx.rotate(p.phase);
+      const arm = pr * (isFloater ? 2.8 : 2.2);
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = Math.max(0.6, pr * 0.35);
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(-arm, 0);
+      ctx.lineTo(arm, 0);
+      ctx.moveTo(0, -arm);
+      ctx.lineTo(0, arm);
+      ctx.stroke();
+      // محور قطري أخف
+      ctx.globalAlpha = alpha * tw * 0.55;
+      ctx.beginPath();
+      ctx.moveTo(-arm * 0.65, -arm * 0.65);
+      ctx.lineTo(arm * 0.65, arm * 0.65);
+      ctx.moveTo(-arm * 0.65, arm * 0.65);
+      ctx.lineTo(arm * 0.65, -arm * 0.65);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+}
+
+/** مسار كبسولة طبية رأسية مثالية */
 function pillPath(ctx, x, y, w, h) {
-  const r = w / 2;
+  const r = Math.min(w / 2, h / 2);
   ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.arc(x + w - r, y + r, r, -Math.PI / 2, Math.PI / 2, false);
-  ctx.lineTo(x + r, y + h);
-  ctx.arc(x + r, y + h - r, r, Math.PI / 2, -Math.PI / 2, false);
+  ctx.moveTo(x, y + r);
+  ctx.arc(x + r, y + r, r, Math.PI, 0, false);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.arc(x + r, y + h - r, r, 0, Math.PI, false);
   ctx.closePath();
 }
 
@@ -259,59 +380,56 @@ function drawSpecialBadge(ctx, cx, cy, r, special) {
   ctx.save();
   ctx.beginPath();
   ctx.arc(cx, cy, r, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(10, 40, 50, 0.55)";
+  ctx.fillStyle = "rgba(8, 30, 40, 0.5)";
   ctx.fill();
-  ctx.strokeStyle = "rgba(255,255,255,0.7)";
-  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = "rgba(255,255,255,0.75)";
+  ctx.lineWidth = 1.4;
   ctx.stroke();
 
   ctx.fillStyle = "#fff";
   ctx.strokeStyle = "#fff";
-  ctx.lineWidth = 2.2;
+  ctx.lineWidth = 2;
   ctx.lineCap = "round";
 
   if (special === "row") {
-    // حقنة أفقية = صف
     ctx.beginPath();
     ctx.moveTo(cx - r * 0.55, cy);
     ctx.lineTo(cx + r * 0.35, cy);
     ctx.stroke();
-    ctx.fillRect(cx + r * 0.3, cy - r * 0.22, r * 0.35, r * 0.44);
+    ctx.fillRect(cx + r * 0.3, cy - r * 0.2, r * 0.32, r * 0.4);
   } else if (special === "col") {
     ctx.beginPath();
     ctx.moveTo(cx, cy - r * 0.55);
     ctx.lineTo(cx, cy + r * 0.35);
     ctx.stroke();
-    ctx.fillRect(cx - r * 0.22, cy + r * 0.3, r * 0.44, r * 0.35);
+    ctx.fillRect(cx - r * 0.2, cy + r * 0.3, r * 0.4, r * 0.32);
   } else if (special === "bomb") {
     ctx.beginPath();
-    ctx.arc(cx, cy, r * 0.35, 0, Math.PI * 2);
+    ctx.arc(cx, cy, r * 0.32, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.moveTo(cx + r * 0.2, cy - r * 0.25);
-    ctx.quadraticCurveTo(cx + r * 0.45, cy - r * 0.55, cx + r * 0.15, cy - r * 0.6);
+    ctx.moveTo(cx + r * 0.18, cy - r * 0.22);
+    ctx.quadraticCurveTo(cx + r * 0.42, cy - r * 0.5, cx + r * 0.12, cy - r * 0.55);
     ctx.stroke();
   } else if (special === "rainbow") {
     const colors = ["#ff6b5a", "#f4c15d", "#7ef0d8", "#4db8ff", "#a060f0"];
     colors.forEach((c, i) => {
       ctx.beginPath();
-      ctx.arc(cx, cy, r * (0.55 - i * 0.08), Math.PI, 0);
+      ctx.arc(cx, cy, r * (0.52 - i * 0.07), Math.PI, 0);
       ctx.strokeStyle = c;
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 1.8;
       ctx.stroke();
     });
   }
   ctx.restore();
 }
 
-/** خلفية لوحة فاخرة */
-export function drawBoardFrame(ctx, w, h, cell, gap, rows, cols, pad) {
+export function drawBoardFrame(ctx, w, h, cell, gap, rows, cols) {
   const gw = cols * cell + (cols - 1) * gap;
   const gh = rows * cell + (rows - 1) * gap;
   const ox = (w - gw) / 2;
   const oy = (h - gh) / 2;
 
-  // شبكة خلايا زجاجية
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       const x = ox + c * (cell + gap);
@@ -323,7 +441,7 @@ export function drawBoardFrame(ctx, w, h, cell, gap, rows, cols, pad) {
       ctx.fill();
     }
   }
-  return { ox, oy, gw, gh, pad };
+  return { ox, oy, gw, gh };
 }
 
 function roundedRect(ctx, x, y, w, h, r) {
