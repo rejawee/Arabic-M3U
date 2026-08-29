@@ -1,4 +1,4 @@
-import { LEVELS, CAPSULE_TYPES, getRank, SAVE_KEY } from "./config.js";
+import { LEVELS, CAPSULE_TYPES, getRank, SAVE_KEY, BOOSTERS, BOOSTER_IDS, getLevelTheme } from "./config.js";
 import { Board } from "./board.js";
 import { BoardView } from "./view.js";
 import { CapsulePowder, drawCapsule, drawBoosterIcon, CAPSULE_ASPECT } from "./capsule.js";
@@ -11,7 +11,7 @@ const state = {
   board: null,
   view: null,
   moves: 0,
-  boosters: { syringe: 3, spray: 3, pulse: 2, shuffle: 2 },
+  boosters: { hammer: 3, rocket: 3, bomb: 2, mix: 2 },
   activeBooster: null,
   animator: null,
 };
@@ -36,6 +36,36 @@ function showScreen(id) {
   document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
   const el = document.getElementById(id);
   if (el) el.classList.add("active");
+}
+
+function applyTheme(level) {
+  const theme = getLevelTheme(level);
+  const c = theme.colors;
+  const root = document.documentElement;
+  root.style.setProperty("--theme-glow1", c.appGlow1);
+  root.style.setProperty("--theme-glow2", c.appGlow2);
+  root.style.setProperty("--theme-bg1", c.stageBg1);
+  root.style.setProperty("--theme-bg2", c.stageBg2);
+  root.style.setProperty("--theme-bg3", c.stageBg3);
+  root.style.setProperty("--theme-accent", c.accent);
+  root.style.setProperty("--theme-hud-border", c.hudBorder);
+  root.style.setProperty("--theme-story-panel", c.storyPanel);
+  root.style.setProperty("--theme-health-1", c.health[0]);
+  root.style.setProperty("--theme-health-2", c.health[1]);
+  root.style.setProperty("--theme-health-3", c.health[2]);
+
+  for (const screenId of ["screen-game", "screen-story"]) {
+    const screen = document.getElementById(screenId);
+    if (screen) screen.dataset.theme = theme.id;
+  }
+
+  const decor = $("#stage-decor");
+  if (decor) {
+    decor.innerHTML = theme.decor.map((d) => `<span>${d}</span>`).join("");
+  }
+
+  if (state.view) state.view.setTheme(theme);
+  return theme;
 }
 
 /* —— Hero floating capsules —— */
@@ -131,6 +161,7 @@ function renderMap() {
     btn.type = "button";
     btn.className = `clinic-node${stars ? " done" : ""}`;
     btn.disabled = !unlocked;
+    btn.dataset.theme = getLevelTheme(lv).id;
     btn.style.animationDelay = `${i * 0.05}s`;
     btn.innerHTML = `
       <div class="clinic-badge">${lv.clinicIcon}</div>
@@ -147,7 +178,8 @@ function renderMap() {
 function openStory(index) {
   state.levelIndex = index;
   const lv = LEVELS[index];
-  $("#story-clinic").textContent = lv.clinic;
+  const theme = applyTheme(lv);
+  $("#story-clinic").textContent = `${theme.icon} ${lv.clinic}`;
   $("#patient-name").textContent = lv.patient;
   $("#patient-condition").textContent = lv.condition;
   $("#story-text").textContent = lv.story;
@@ -176,6 +208,7 @@ function openStory(index) {
 /* —— Gameplay —— */
 function startLevel() {
   const lv = LEVELS[state.levelIndex];
+  applyTheme(lv);
   state.moves = lv.moves;
   state.activeBooster = null;
   document.querySelectorAll(".booster").forEach((b) => b.classList.remove("active"));
@@ -210,11 +243,11 @@ function updateHud() {
 }
 
 function updateBoosterUI() {
-  for (const k of ["syringe", "spray", "pulse", "shuffle"]) {
-    const el = $(`#boost-${k}`);
-    if (el) el.textContent = String(state.boosters[k]);
-    const btn = document.querySelector(`.booster[data-booster="${k}"]`);
-    if (btn) btn.disabled = state.boosters[k] <= 0;
+  for (const id of BOOSTER_IDS) {
+    const el = $(`#boost-${id}`);
+    if (el) el.textContent = String(state.boosters[id]);
+    const btn = document.querySelector(`.booster[data-booster="${id}"]`);
+    if (btn) btn.disabled = state.boosters[id] <= 0;
   }
 }
 
@@ -228,10 +261,12 @@ async function handleSwap(r1, c1, r2, c2) {
 }
 
 async function handleBoosterTap(r, c, kind) {
+  const booster = BOOSTERS[kind];
+  const boardKey = booster?.boardKey || kind;
   if (!kind || state.boosters[kind] <= 0) return;
-  if (kind !== "shuffle" && state.board.isBlocked(r, c)) return;
+  if (boardKey !== "shuffle" && state.board.isBlocked(r, c)) return;
 
-  const used = await state.board.useBooster(kind, r, c, state.animator);
+  const used = await state.board.useBooster(boardKey, r, c, state.animator);
   if (!used) return;
   state.boosters[kind]--;
   state.activeBooster = null;
@@ -333,7 +368,7 @@ function paintBoosterIcons() {
   document.querySelectorAll(".booster-canvas").forEach((c) => {
     const kind = c.dataset.icon;
     const dpr = Math.min(2, devicePixelRatio || 1);
-    const css = 48;
+    const css = 44;
     c.width = css * dpr;
     c.height = css * dpr;
     c.style.width = `${css}px`;
@@ -388,8 +423,8 @@ function wireUI() {
     btn.addEventListener("click", () => {
       const kind = btn.dataset.booster;
       if (state.boosters[kind] <= 0) return;
-      if (kind === "shuffle") {
-        handleBoosterTap(0, 0, "shuffle");
+      if (kind === "mix") {
+        handleBoosterTap(0, 0, "mix");
         return;
       }
       if (state.activeBooster === kind) {
