@@ -52,12 +52,13 @@
     const canvas = document.getElementById("c");
     const ctx = canvas.getContext("2d");
     const powder = new CapsulePowder("cyan", 42);
-    // انتظر تحميل صورة المرجع ثم ارسم
     const loop = () => {
       powder.update(1 / 60);
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      drawCapsule(ctx, 80, 40, 400, 760, "cyan", powder, { scale: 1 });
+      // نفس نسب المرجع داخل إطار 560×840
+      const box = { x: 60, y: 20, w: 440, h: 800 };
+      drawCapsule(ctx, box.x, box.y, box.w, box.h, "cyan", powder, { scale: 1 });
       requestAnimationFrame(loop);
     };
     loop();

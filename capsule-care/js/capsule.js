@@ -4,6 +4,34 @@
  */
 import { CAPSULE_TYPES } from "./config.js";
 
+/** نسب مرجع Royal Match: كبسولة طويلة ضيقة (~2:1) */
+export const CAPSULE_ASPECT = 2.05;
+export const CAPSULE_FILL = 0.5;
+
+/** يحسب أبعاد الجسم داخل خلية مربعة أو مستطيلة مع الحفاظ على نسبة المرجع */
+export function capsuleBounds(x, y, w, h) {
+  const padX = w * 0.05;
+  const padY = h * 0.03;
+  const maxW = Math.max(8, w - padX * 2);
+  const maxH = Math.max(8, h - padY * 2);
+
+  let bw = maxW * 0.94;
+  let bh = bw * CAPSULE_ASPECT;
+  if (bh > maxH * 0.97) {
+    bh = maxH * 0.97;
+    bw = bh / CAPSULE_ASPECT;
+  }
+
+  return {
+    bw,
+    bh,
+    bx: x + (w - bw) / 2,
+    by: y + (h - bh) / 2,
+    cx: x + w / 2,
+    cy: y + h / 2,
+  };
+}
+
 export class CapsulePowder {
   constructor(typeId, seed = Math.random() * 1000) {
     this.typeId = typeId;
@@ -23,13 +51,13 @@ export class CapsulePowder {
   _rebuild() {
     this.grains = [];
     this.sparks = [];
-    // حبيبات كثيفة في النصف السفلي المتوهج
+    // حبيبات كثيفة في النصف السفلي فقط (تحت خط التحام 50%)
     for (let i = 0; i < 55; i++) {
       const t = Math.pow(this._rand(i), 0.55);
       this.grains.push({
-        x: 0.18 + this._rand(i + 50) * 0.64,
-        y: 0.48 + t * 0.44,
-        r: 0.02 + this._rand(i + 90) * 0.035,
+        x: 0.2 + this._rand(i + 50) * 0.6,
+        y: CAPSULE_FILL + 0.02 + t * 0.42,
+        r: 0.018 + this._rand(i + 90) * 0.032,
         vx: 0,
         vy: 0,
         phase: this._rand(i + 120) * Math.PI * 2,
@@ -38,11 +66,11 @@ export class CapsulePowder {
     }
     for (let i = 0; i < 10; i++) {
       this.sparks.push({
-        x: 0.25 + this._rand(i + 200) * 0.5,
-        y: 0.14 + this._rand(i + 220) * 0.28,
+        x: 0.28 + this._rand(i + 200) * 0.44,
+        y: 0.12 + this._rand(i + 220) * (CAPSULE_FILL - 0.16),
         phase: this._rand(i + 240) * Math.PI * 2,
         speed: 3 + this._rand(i + 260) * 6,
-        r: 0.012 + this._rand(i + 280) * 0.02,
+        r: 0.01 + this._rand(i + 280) * 0.018,
       });
     }
   }
@@ -79,12 +107,12 @@ export class CapsulePowder {
         g.x = 0.84;
         g.vx *= -0.4;
       }
-      if (g.y < 0.42) {
-        g.y = 0.42;
+      if (g.y < CAPSULE_FILL + 0.015) {
+        g.y = CAPSULE_FILL + 0.015;
         g.vy = Math.abs(g.vy) * 0.2;
       }
-      if (g.y > 0.9) {
-        g.y = 0.9;
+      if (g.y > 0.92) {
+        g.y = 0.92;
         g.vy *= -0.15;
       }
     }
@@ -124,20 +152,17 @@ export function drawCapsule(ctx, x, y, w, h, typeId, powder, opts = {}) {
   ctx.scale(scale, scale);
   ctx.translate(-cx, -cy);
 
-  const bw = w * 0.56;
-  const bh = h * 0.9;
-  const bx = cx - bw / 2;
-  const by = cy - bh / 2;
+  const { bw, bh, bx, by } = capsuleBounds(x, y, w, h);
   const p = def.powder;
   const t = powder?.time || 0;
   const shake = powder?.shakeAmp || 0;
   const jx = Math.sin(t * 30) * shake * w * 0.018;
   const jy = Math.cos(t * 26) * shake * h * 0.012;
 
-  // ظل ناعم
+  // ظل ناعم تحت قاعدة الكبسولة
   ctx.beginPath();
-  ctx.ellipse(cx, y + h * 0.93, bw * 0.42, h * 0.05, 0, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(0,0,0,0.35)";
+  ctx.ellipse(cx, by + bh + h * 0.015, bw * 0.38, Math.max(2, h * 0.035), 0, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(0,0,0,0.32)";
   ctx.fill();
 
   // هالة توهج خارجية (لون الكبسولة)
@@ -153,19 +178,20 @@ export function drawCapsule(ctx, x, y, w, h, typeId, powder, opts = {}) {
 
   // —— داخل الكبسولة ——
   ctx.save();
-  pillPath(ctx, bx + bw * 0.06 + jx, by + bh * 0.04 + jy, bw * 0.88, bh * 0.92);
+  pillPath(ctx, bx + bw * 0.04 + jx, by + bh * 0.02 + jy, bw * 0.92, bh * 0.96);
   ctx.clip();
 
-  // فراغ علوي زجاجي لامع
-  const air = ctx.createLinearGradient(bx, by, bx, by + bh * 0.5);
-  air.addColorStop(0, "rgba(255,255,255,0.55)");
-  air.addColorStop(0.45, "rgba(255,255,255,0.12)");
+  // فراغ علوي زجاجي شفاف (النصف العلوي فارغ)
+  const air = ctx.createLinearGradient(bx, by, bx, by + bh * CAPSULE_FILL);
+  air.addColorStop(0, "rgba(255,255,255,0.62)");
+  air.addColorStop(0.35, "rgba(255,255,255,0.18)");
+  air.addColorStop(0.85, "rgba(255,255,255,0.04)");
   air.addColorStop(1, "rgba(255,255,255,0)");
   ctx.fillStyle = air;
-  ctx.fillRect(bx, by, bw, bh * 0.5);
+  ctx.fillRect(bx, by, bw, bh * CAPSULE_FILL);
 
-  // كتلة بودرة متوهجة (نمط الأصول: نصف سفلي مضيء)
-  const fillY = by + bh * 0.42 + Math.sin(t * 2) * bh * 0.008 + jy * 0.3;
+  // كتلة بودرة متوهجة — النصف السفلي فقط (خط التحام 50%)
+  const fillY = by + bh * CAPSULE_FILL + Math.sin(t * 2) * bh * 0.006 + jy * 0.25;
   const body = ctx.createLinearGradient(bx, fillY, bx, by + bh);
   body.addColorStop(0, p[0]);
   body.addColorStop(0.15, p[1]);
@@ -188,8 +214,8 @@ export function drawCapsule(ctx, x, y, w, h, typeId, powder, opts = {}) {
   ctx.closePath();
   ctx.fill();
 
-  // توهج داخلي مركزي للبودرة
-  const glow = ctx.createRadialGradient(cx, by + bh * 0.68, 2, cx, by + bh * 0.7, bw * 0.55);
+  // توهج داخلي مركزي للبودرة (مركز النصف السفلي)
+  const glow = ctx.createRadialGradient(cx, by + bh * 0.72, 2, cx, by + bh * 0.74, bw * 0.52);
   glow.addColorStop(0, p[1] + "cc");
   glow.addColorStop(0.5, p[2] + "66");
   glow.addColorStop(1, "transparent");
@@ -258,23 +284,23 @@ export function drawCapsule(ctx, x, y, w, h, typeId, powder, opts = {}) {
   ctx.fillStyle = rim;
   ctx.fill();
 
-  // إطار أبيض سميك لامع
+  // إطار أبيض لامع (Royal Match: حافة زجاجية واضحة)
   pillPath(ctx, bx + jx, by + jy, bw, bh);
-  ctx.strokeStyle = "rgba(255,255,255,0.95)";
-  ctx.lineWidth = Math.max(2.2, w * 0.038);
+  ctx.strokeStyle = "rgba(255,255,255,0.96)";
+  ctx.lineWidth = Math.max(1.8, bw * 0.055);
   ctx.stroke();
 
   // إطار لوني خارجي رفيع
   pillPath(ctx, bx + jx, by + jy, bw, bh);
-  ctx.strokeStyle = p[2] + "aa";
-  ctx.lineWidth = Math.max(1, w * 0.014);
+  ctx.strokeStyle = p[2] + "bb";
+  ctx.lineWidth = Math.max(0.8, bw * 0.018);
   ctx.stroke();
 
-  // خط التحام المنتصف
+  // خط التحام المنتصف (50%)
   ctx.save();
   pillPath(ctx, bx + jx, by + jy, bw, bh);
   ctx.clip();
-  const seamY = cy + jy;
+  const seamY = by + bh * CAPSULE_FILL + jy;
   ctx.beginPath();
   ctx.moveTo(bx + bw * 0.08 + jx, seamY);
   ctx.lineTo(bx + bw * 0.92 + jx, seamY);
@@ -289,23 +315,23 @@ export function drawCapsule(ctx, x, y, w, h, typeId, powder, opts = {}) {
   ctx.stroke();
   ctx.restore();
 
-  // Speculars قوية
+  // Speculars على القبة العلوية الزجاجية
   ctx.beginPath();
-  ctx.ellipse(cx - bw * 0.16 + jx, by + bh * 0.16 + jy, bw * 0.16, bh * 0.11, -0.45, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(255,255,255,0.85)";
+  ctx.ellipse(cx - bw * 0.14 + jx, by + bh * 0.14 + jy, bw * 0.14, bh * 0.07, -0.4, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(255,255,255,0.88)";
   ctx.fill();
 
   ctx.beginPath();
-  ctx.ellipse(cx + bw * 0.12 + jx, by + bh * 0.09 + jy, bw * 0.07, bh * 0.03, 0.25, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(255,255,255,0.7)";
+  ctx.ellipse(cx + bw * 0.1 + jx, by + bh * 0.08 + jy, bw * 0.06, bh * 0.025, 0.25, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(255,255,255,0.72)";
   ctx.fill();
 
-  // شريط لمعان أيسر طويل
+  // شريط لمعان أيسر على طول الكبسولة
   ctx.beginPath();
-  ctx.moveTo(bx + bw * 0.18 + jx, by + bh * 0.14 + jy);
-  ctx.quadraticCurveTo(bx + bw * 0.06 + jx, cy + jy, bx + bw * 0.2 + jx, by + bh * 0.86 + jy);
-  ctx.strokeStyle = "rgba(255,255,255,0.7)";
-  ctx.lineWidth = Math.max(1.8, w * 0.03);
+  ctx.moveTo(bx + bw * 0.22 + jx, by + bh * 0.1 + jy);
+  ctx.quadraticCurveTo(bx + bw * 0.1 + jx, by + bh * CAPSULE_FILL + jy, bx + bw * 0.22 + jx, by + bh * 0.88 + jy);
+  ctx.strokeStyle = "rgba(255,255,255,0.65)";
+  ctx.lineWidth = Math.max(1.2, bw * 0.045);
   ctx.lineCap = "round";
   ctx.stroke();
 
