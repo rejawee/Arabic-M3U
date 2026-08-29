@@ -6,9 +6,9 @@
 
 طالما بيئة النشر تعمل، افتح:
 
-**https://nodes-profiles-canberra-scanners.trycloudflare.com**
+**https://experiment-share-chronicles-westminster.trycloudflare.com**
 
-> إن توقف الرابط لاحقاً، شغّل اللعبة محلياً كما في الأسفل، أو فعّل GitHub Pages من فرع `gh-pages`.
+> رابط مؤقت (يعمل طالما السيرفر شغّال). للرابط الدائم فعّل GitHub Pages بالأسفل.
 
 ## تشغيل محلي
 

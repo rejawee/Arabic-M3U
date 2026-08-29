@@ -5,7 +5,9 @@
 
 ## رابط اللعبة
 
-**https://nodes-profiles-canberra-scanners.trycloudflare.com**
+**https://experiment-share-chronicles-westminster.trycloudflare.com**
+
+> رابط مؤقت. للرابط الدائم: https://rejawee.github.io/Arabic-M3U/ (يحتاج تفعيل Pages)
 
 تشغيل محلي:
 ```bash
