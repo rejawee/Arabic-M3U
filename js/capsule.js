@@ -1,203 +1,8 @@
 /**
- * كبسولات من صورة المرجع الفوتوغرافية مباشرة
- * + إعادة تلوين البودرة لكل نوع + حركة وميض/اهتزاز
+ * كبسولات Royal Match طبية — أسلوب juicy ثلاثي الأبعاد
+ * غلاف زجاجي لامع + بودرة متوهجة متحركة + هالة اختيار + قطع خاصة
  */
 import { CAPSULE_TYPES } from "./config.js";
-
-let refImage = null;
-let refReady = false;
-const tintCache = new Map();
-
-const REF_SRC = new URL("../assets/capsule-ref.jpg", import.meta.url).href;
-
-function loadRef() {
-  if (refImage) return;
-  refImage = new Image();
-  refImage.decoding = "async";
-  refImage.onload = () => {
-    refReady = true;
-    tintCache.clear();
-  };
-  refImage.onerror = () => {
-    console.warn("capsule-ref failed to load", REF_SRC);
-  };
-  refImage.src = REF_SRC;
-}
-loadRef();
-
-/** استخراج منطقة الكبسولة من خلفية بيضاء مع قصّ الحدود */
-function buildMaskedSource() {
-  if (!refReady) return null;
-  const iw = refImage.naturalWidth;
-  const ih = refImage.naturalHeight;
-  const c = document.createElement("canvas");
-  c.width = iw;
-  c.height = ih;
-  const ctx = c.getContext("2d", { willReadFrequently: true });
-  ctx.drawImage(refImage, 0, 0);
-  const img = ctx.getImageData(0, 0, iw, ih);
-  const d = img.data;
-
-  let minX = iw;
-  let minY = ih;
-  let maxX = 0;
-  let maxY = 0;
-
-  for (let y = 0; y < ih; y++) {
-    for (let x = 0; x < iw; x++) {
-      const i = (y * iw + x) * 4;
-      const r = d[i];
-      const g = d[i + 1];
-      const b = d[i + 2];
-      const max = Math.max(r, g, b);
-      const min = Math.min(r, g, b);
-      const isWhite = r > 245 && g > 245 && b > 245;
-      const isNearWhite = r > 228 && g > 228 && b > 228 && max - min < 14;
-      if (isWhite || isNearWhite) {
-        d[i + 3] = 0;
-      } else {
-        if (x < minX) minX = x;
-        if (y < minY) minY = y;
-        if (x > maxX) maxX = x;
-        if (y > maxY) maxY = y;
-      }
-    }
-  }
-  ctx.putImageData(img, 0, 0);
-
-  // هامش صغير حول الكبسولة
-  const pad = Math.max(4, Math.round(iw * 0.01));
-  minX = Math.max(0, minX - pad);
-  minY = Math.max(0, minY - pad);
-  maxX = Math.min(iw - 1, maxX + pad);
-  maxY = Math.min(ih - 1, maxY + pad);
-
-  const cw = maxX - minX + 1;
-  const ch = maxY - minY + 1;
-  const out = document.createElement("canvas");
-  out.width = cw;
-  out.height = ch;
-  out.getContext("2d").drawImage(c, minX, minY, cw, ch, 0, 0, cw, ch);
-  return out;
-}
-
-let maskedSource = null;
-
-function getMasked() {
-  if (!refReady) return null;
-  if (!maskedSource) maskedSource = buildMaskedSource();
-  return maskedSource;
-}
-
-function rgbToHsl(r, g, b) {
-  r /= 255;
-  g /= 255;
-  b /= 255;
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  let h = 0;
-  let s = 0;
-  const l = (max + min) / 2;
-  if (max !== min) {
-    const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    switch (max) {
-      case r:
-        h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
-        break;
-      case g:
-        h = ((b - r) / d + 2) / 6;
-        break;
-      default:
-        h = ((r - g) / d + 4) / 6;
-    }
-  }
-  return [h, s, l];
-}
-
-function hslToRgb(h, s, l) {
-  let r;
-  let g;
-  let b;
-  if (s === 0) {
-    r = g = b = l;
-  } else {
-    const hue2rgb = (p, q, t) => {
-      if (t < 0) t += 1;
-      if (t > 1) t -= 1;
-      if (t < 1 / 6) return p + (q - p) * 6 * t;
-      if (t < 1 / 2) return q;
-      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-      return p;
-    };
-    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-    const p = 2 * l - q;
-    r = hue2rgb(p, q, h + 1 / 3);
-    g = hue2rgb(p, q, h);
-    b = hue2rgb(p, q, h - 1 / 3);
-  }
-  return [(r * 255) | 0, (g * 255) | 0, (b * 255) | 0];
-}
-
-/** هدف Hue لكل نوع (درجة 0-1) */
-const TYPE_HUE = {
-  cyan: null, // أصلي بدون تحويل
-  azure: 0.58,
-  jade: 0.38,
-  amber: 0.12,
-  ruby: 0.0,
-  violet: 0.78,
-};
-
-function getTintedSprite(typeId) {
-  const src = getMasked();
-  if (!src) return null;
-  if (tintCache.has(typeId)) return tintCache.get(typeId);
-
-  const targetHue = TYPE_HUE[typeId];
-  if (targetHue == null) {
-    tintCache.set(typeId, src);
-    return src;
-  }
-
-  const c = document.createElement("canvas");
-  c.width = src.width;
-  c.height = src.height;
-  const ctx = c.getContext("2d", { willReadFrequently: true });
-  ctx.drawImage(src, 0, 0);
-  const img = ctx.getImageData(0, 0, c.width, c.height);
-  const d = img.data;
-
-  for (let i = 0; i < d.length; i += 4) {
-    if (d[i + 3] < 10) continue;
-    const r = d[i];
-    const g = d[i + 1];
-    const b = d[i + 2];
-    const [h, s, l] = rgbToHsl(r, g, b);
-
-    // أعد تلوين البودرة الملوّنة فقط (تشبع واضح، ليست إبرازات زجاجية)
-    // البودرة المرجعية في نطاق أزرق/سماوي
-    const isPowder =
-      s > 0.12 &&
-      l > 0.05 &&
-      l < 0.92 &&
-      !(r > 220 && g > 220 && b > 220) &&
-      !(s < 0.2 && l > 0.75);
-
-    if (isPowder) {
-      // حافظ على الإضاءة والتشبع تقريباً، غيّر الـ hue
-      const satBoost = Math.min(1, s * 1.15);
-      const [nr, ng, nb] = hslToRgb(targetHue, satBoost, l);
-      d[i] = nr;
-      d[i + 1] = ng;
-      d[i + 2] = nb;
-    }
-  }
-
-  ctx.putImageData(img, 0, 0);
-  tintCache.set(typeId, c);
-  return c;
-}
 
 export class CapsulePowder {
   constructor(typeId, seed = Math.random() * 1000) {
@@ -205,32 +10,100 @@ export class CapsulePowder {
     this.seed = seed;
     this.time = seed * 0.01;
     this.shakeAmp = 0;
-    this.sparkles = [];
-    for (let i = 0; i < 6; i++) {
-      this.sparkles.push({
-        x: 0.25 + Math.random() * 0.5,
-        y: 0.12 + Math.random() * 0.28,
-        phase: Math.random() * Math.PI * 2,
-        speed: 3 + Math.random() * 5,
-        r: 0.01 + Math.random() * 0.015,
+    this.grains = [];
+    this.sparks = [];
+    this._rebuild();
+  }
+
+  _rand(i) {
+    const x = Math.sin(this.seed * 17.13 + i * 91.7) * 43758.5453;
+    return x - Math.floor(x);
+  }
+
+  _rebuild() {
+    this.grains = [];
+    this.sparks = [];
+    // حبيبات كثيفة في النصف السفلي المتوهج
+    for (let i = 0; i < 55; i++) {
+      const t = Math.pow(this._rand(i), 0.55);
+      this.grains.push({
+        x: 0.18 + this._rand(i + 50) * 0.64,
+        y: 0.48 + t * 0.44,
+        r: 0.02 + this._rand(i + 90) * 0.035,
+        vx: 0,
+        vy: 0,
+        phase: this._rand(i + 120) * Math.PI * 2,
+        bright: this._rand(i + 140) > 0.65,
+      });
+    }
+    for (let i = 0; i < 10; i++) {
+      this.sparks.push({
+        x: 0.25 + this._rand(i + 200) * 0.5,
+        y: 0.14 + this._rand(i + 220) * 0.28,
+        phase: this._rand(i + 240) * Math.PI * 2,
+        speed: 3 + this._rand(i + 260) * 6,
+        r: 0.012 + this._rand(i + 280) * 0.02,
       });
     }
   }
 
   setType(typeId) {
+    if (this.typeId === typeId) return;
     this.typeId = typeId;
+    this._rebuild();
   }
 
   shake(intensity = 1) {
-    this.shakeAmp = Math.min(2, this.shakeAmp + intensity);
+    this.shakeAmp = Math.min(2.2, this.shakeAmp + intensity);
+    for (const g of this.grains) {
+      g.vx += (Math.random() - 0.5) * 0.14 * intensity;
+      g.vy += (Math.random() - 0.5) * 0.12 * intensity - 0.05 * intensity;
+    }
   }
 
   update(dt) {
     this.time += dt;
-    if (this.shakeAmp > 0) this.shakeAmp = Math.max(0, this.shakeAmp - dt * 2);
+    if (this.shakeAmp > 0) this.shakeAmp = Math.max(0, this.shakeAmp - dt * 2.2);
+    for (const g of this.grains) {
+      g.vx += Math.sin(this.time * 2.5 + g.phase) * 0.006 * dt;
+      g.vy += 0.55 * dt * 0.1;
+      g.x += g.vx * dt;
+      g.y += g.vy * dt;
+      g.vx *= 0.95;
+      g.vy *= 0.92;
+      if (g.x < 0.16) {
+        g.x = 0.16;
+        g.vx *= -0.4;
+      }
+      if (g.x > 0.84) {
+        g.x = 0.84;
+        g.vx *= -0.4;
+      }
+      if (g.y < 0.42) {
+        g.y = 0.42;
+        g.vy = Math.abs(g.vy) * 0.2;
+      }
+      if (g.y > 0.9) {
+        g.y = 0.9;
+        g.vy *= -0.15;
+      }
+    }
   }
 }
 
+function pillPath(ctx, x, y, w, h) {
+  const r = Math.min(w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x, y + r);
+  ctx.arc(x + r, y + r, r, Math.PI, 0, false);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.arc(x + r, y + h - r, r, 0, Math.PI, false);
+  ctx.closePath();
+}
+
+/**
+ * رسم كبسولة juicy مطابقة لورقة الأصول
+ */
 export function drawCapsule(ctx, x, y, w, h, typeId, powder, opts = {}) {
   const def = CAPSULE_TYPES[typeId];
   if (!def) return;
@@ -251,127 +124,242 @@ export function drawCapsule(ctx, x, y, w, h, typeId, powder, opts = {}) {
   ctx.scale(scale, scale);
   ctx.translate(-cx, -cy);
 
-  const bw = w * 0.72;
-  const bh = h * 0.9;
+  const bw = w * 0.7;
+  const bh = h * 0.88;
   const bx = cx - bw / 2;
   const by = cy - bh / 2;
-
-  // ظل
-  ctx.beginPath();
-  ctx.ellipse(cx, y + h * 0.93, bw * 0.38, h * 0.04, 0, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(0,0,0,0.2)";
-  ctx.fill();
-
-  const sprite = getTintedSprite(typeId);
+  const p = def.powder;
   const t = powder?.time || 0;
   const shake = powder?.shakeAmp || 0;
-  const jx = Math.sin(t * 28) * shake * w * 0.02;
-  const jy = Math.cos(t * 24) * shake * h * 0.015;
-  // حركة بودرة خفيفة مستمرة (اهتزاز مجهري)
-  const breath = Math.sin(t * 2.2) * h * 0.004;
+  const jx = Math.sin(t * 30) * shake * w * 0.018;
+  const jy = Math.cos(t * 26) * shake * h * 0.012;
 
-  if (sprite) {
-    ctx.drawImage(sprite, bx + jx, by + jy + breath, bw, bh);
-  } else {
-    // احتياطي ريثما تُحمَّل الصورة
-    drawFallback(ctx, bx, by, bw, bh, def);
+  // ظل ناعم
+  ctx.beginPath();
+  ctx.ellipse(cx, y + h * 0.93, bw * 0.42, h * 0.05, 0, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(0,0,0,0.35)";
+  ctx.fill();
+
+  // هالة توهج خارجية (لون الكبسولة)
+  if (selected || highlight > 0 || special) {
+    pillPath(ctx, bx - 4 + jx, by - 4 + jy, bw + 8, bh + 8);
+    ctx.strokeStyle = def.glow;
+    ctx.lineWidth = selected ? 5 : 3.5;
+    ctx.shadowColor = def.glow;
+    ctx.shadowBlur = selected ? 18 : 10;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
   }
 
-  // وميض إضافي فوق الفراغ العلوي ليوحي بحركة البودرة
-  if (powder?.sparkles && sprite) {
-    for (const s of powder.sparkles) {
-      const tw = 0.25 + 0.75 * Math.abs(Math.sin(t * s.speed + s.phase));
-      const px = bx + s.x * bw + jx;
-      const py = by + s.y * bh + jy;
-      const pr = s.r * Math.min(bw, bh);
-      ctx.globalAlpha = alpha * tw * 0.85;
-      ctx.fillStyle = "#ffffff";
+  // —— داخل الكبسولة ——
+  ctx.save();
+  pillPath(ctx, bx + bw * 0.06 + jx, by + bh * 0.04 + jy, bw * 0.88, bh * 0.92);
+  ctx.clip();
+
+  // فراغ علوي زجاجي لامع
+  const air = ctx.createLinearGradient(bx, by, bx, by + bh * 0.5);
+  air.addColorStop(0, "rgba(255,255,255,0.55)");
+  air.addColorStop(0.45, "rgba(255,255,255,0.12)");
+  air.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = air;
+  ctx.fillRect(bx, by, bw, bh * 0.5);
+
+  // كتلة بودرة متوهجة (نمط الأصول: نصف سفلي مضيء)
+  const fillY = by + bh * 0.42 + Math.sin(t * 2) * bh * 0.008 + jy * 0.3;
+  const body = ctx.createLinearGradient(bx, fillY, bx, by + bh);
+  body.addColorStop(0, p[0]);
+  body.addColorStop(0.15, p[1]);
+  body.addColorStop(0.45, p[2]);
+  body.addColorStop(0.75, p[3]);
+  body.addColorStop(1, p[4] || p[3]);
+  ctx.fillStyle = body;
+
+  ctx.beginPath();
+  ctx.moveTo(bx - 2, by + bh + 2);
+  ctx.lineTo(bx - 2, fillY + bh * 0.02);
+  for (let i = 0; i <= 14; i++) {
+    const px = bx + (bw * i) / 14;
+    const wave =
+      Math.sin(i * 0.85 + t * 2.4) * bh * 0.014 +
+      Math.sin(i * 2.2 + t * 1.6) * bh * 0.007;
+    ctx.lineTo(px, fillY + wave);
+  }
+  ctx.lineTo(bx + bw + 2, by + bh + 2);
+  ctx.closePath();
+  ctx.fill();
+
+  // توهج داخلي مركزي للبودرة
+  const glow = ctx.createRadialGradient(cx, by + bh * 0.68, 2, cx, by + bh * 0.7, bw * 0.55);
+  glow.addColorStop(0, p[1] + "cc");
+  glow.addColorStop(0.5, p[2] + "66");
+  glow.addColorStop(1, "transparent");
+  ctx.fillStyle = glow;
+  ctx.fillRect(bx, fillY, bw, bh);
+
+  // حبيبات glitter متحركة
+  if (powder?.grains) {
+    for (const g of powder.grains) {
+      const gx = bx + g.x * bw + jx;
+      const gy = by + g.y * bh + jy;
+      const gr = Math.max(0.9, g.r * Math.min(bw, bh));
       ctx.beginPath();
-      ctx.arc(px, py, pr, 0, Math.PI * 2);
+      ctx.arc(gx, gy, gr, 0, Math.PI * 2);
+      if (g.bright) {
+        ctx.fillStyle = "#ffffff";
+        ctx.globalAlpha = alpha * (0.55 + 0.45 * Math.sin(t * 5 + g.phase));
+      } else {
+        const gg = ctx.createRadialGradient(gx - gr * 0.3, gy - gr * 0.3, 0, gx, gy, gr);
+        gg.addColorStop(0, "#ffffff");
+        gg.addColorStop(0.4, p[1]);
+        gg.addColorStop(1, p[3]);
+        ctx.fillStyle = gg;
+        ctx.globalAlpha = alpha;
+      }
       ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(px - pr * 2.2, py);
-      ctx.lineTo(px + pr * 2.2, py);
-      ctx.moveTo(px, py - pr * 2);
-      ctx.lineTo(px, py + pr * 2);
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = Math.max(0.5, pr * 0.4);
-      ctx.stroke();
       ctx.globalAlpha = alpha;
     }
   }
 
-  if (selected || highlight > 0) {
-    pillPath(ctx, bx - 2, by - 2, bw + 4, bh + 4);
-    ctx.strokeStyle = def.glow;
-    ctx.lineWidth = 3 + highlight * 2;
-    ctx.stroke();
+  // شرارات علوية
+  if (powder?.sparks) {
+    for (const s of powder.sparks) {
+      const tw = 0.3 + 0.7 * Math.abs(Math.sin(t * s.speed + s.phase));
+      const sx = bx + s.x * bw;
+      const sy = by + s.y * bh;
+      const sr = s.r * Math.min(bw, bh);
+      ctx.globalAlpha = alpha * tw;
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = Math.max(0.7, sr * 0.45);
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(sx - sr * 2.4, sy);
+      ctx.lineTo(sx + sr * 2.4, sy);
+      ctx.moveTo(sx, sy - sr * 2.2);
+      ctx.lineTo(sx, sy + sr * 2.2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(sx, sy, sr * 0.7, 0, Math.PI * 2);
+      ctx.fillStyle = "#ffffff";
+      ctx.fill();
+      ctx.globalAlpha = alpha;
+    }
   }
 
-  if (special) drawSpecialBadge(ctx, cx, cy, w * 0.16, special);
+  ctx.restore();
+
+  // —— غلاف زجاجي juicy ——
+  // طبقة لون خفيفة على الحافة (Fresnel ملون)
+  pillPath(ctx, bx + jx, by + jy, bw, bh);
+  const rim = ctx.createLinearGradient(bx, by, bx + bw, by);
+  rim.addColorStop(0, p[2] + "55");
+  rim.addColorStop(0.25, "rgba(255,255,255,0.08)");
+  rim.addColorStop(0.75, "rgba(255,255,255,0.08)");
+  rim.addColorStop(1, p[2] + "55");
+  ctx.fillStyle = rim;
+  ctx.fill();
+
+  // إطار أبيض سميك لامع
+  pillPath(ctx, bx + jx, by + jy, bw, bh);
+  ctx.strokeStyle = "rgba(255,255,255,0.95)";
+  ctx.lineWidth = Math.max(2.2, w * 0.038);
+  ctx.stroke();
+
+  // إطار لوني خارجي رفيع
+  pillPath(ctx, bx + jx, by + jy, bw, bh);
+  ctx.strokeStyle = p[2] + "aa";
+  ctx.lineWidth = Math.max(1, w * 0.014);
+  ctx.stroke();
+
+  // خط التحام المنتصف
+  ctx.save();
+  pillPath(ctx, bx + jx, by + jy, bw, bh);
+  ctx.clip();
+  const seamY = cy + jy;
+  ctx.beginPath();
+  ctx.moveTo(bx + bw * 0.08 + jx, seamY);
+  ctx.lineTo(bx + bw * 0.92 + jx, seamY);
+  ctx.strokeStyle = "rgba(40,70,100,0.45)";
+  ctx.lineWidth = Math.max(1.4, w * 0.022);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(bx + bw * 0.1 + jx, seamY - 1.2);
+  ctx.lineTo(bx + bw * 0.9 + jx, seamY - 1.2);
+  ctx.strokeStyle = "rgba(255,255,255,0.5)";
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.restore();
+
+  // Speculars قوية
+  ctx.beginPath();
+  ctx.ellipse(cx - bw * 0.16 + jx, by + bh * 0.16 + jy, bw * 0.16, bh * 0.11, -0.45, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(255,255,255,0.85)";
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.ellipse(cx + bw * 0.12 + jx, by + bh * 0.09 + jy, bw * 0.07, bh * 0.03, 0.25, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(255,255,255,0.7)";
+  ctx.fill();
+
+  // شريط لمعان أيسر طويل
+  ctx.beginPath();
+  ctx.moveTo(bx + bw * 0.18 + jx, by + bh * 0.14 + jy);
+  ctx.quadraticCurveTo(bx + bw * 0.06 + jx, cy + jy, bx + bw * 0.2 + jx, by + bh * 0.86 + jy);
+  ctx.strokeStyle = "rgba(255,255,255,0.7)";
+  ctx.lineWidth = Math.max(1.8, w * 0.03);
+  ctx.lineCap = "round";
+  ctx.stroke();
+
+  // قطع خاصة
+  if (special) drawSpecialOverlay(ctx, cx + jx, cy + jy, bw, bh, special, def, t);
 
   ctx.restore();
 }
 
-function drawFallback(ctx, bx, by, bw, bh, def) {
-  pillPath(ctx, bx, by, bw, bh);
-  ctx.fillStyle = "rgba(200,220,235,0.25)";
-  ctx.fill();
-  ctx.strokeStyle = "rgba(255,255,255,0.8)";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-  const g = ctx.createLinearGradient(bx, by + bh * 0.35, bx, by + bh);
-  g.addColorStop(0, def.powder[1]);
-  g.addColorStop(1, def.powder[4] || def.powder[3]);
-  ctx.fillStyle = g;
-  ctx.fillRect(bx + bw * 0.1, by + bh * 0.38, bw * 0.8, bh * 0.55);
-}
-
-function pillPath(ctx, x, y, w, h) {
-  const r = Math.min(w / 2, h / 2);
-  ctx.beginPath();
-  ctx.moveTo(x, y + r);
-  ctx.arc(x + r, y + r, r, Math.PI, 0, false);
-  ctx.lineTo(x + w, y + h - r);
-  ctx.arc(x + r, y + h - r, r, 0, Math.PI, false);
-  ctx.closePath();
-}
-
-function drawSpecialBadge(ctx, cx, cy, r, special) {
+function drawSpecialOverlay(ctx, cx, cy, bw, bh, special, def, t) {
   ctx.save();
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(8, 30, 40, 0.5)";
-  ctx.fill();
-  ctx.strokeStyle = "rgba(255,255,255,0.75)";
-  ctx.lineWidth = 1.3;
-  ctx.stroke();
-  ctx.strokeStyle = "#fff";
-  ctx.fillStyle = "#fff";
-  ctx.lineWidth = 2;
-  ctx.lineCap = "round";
-  if (special === "row") {
+  if (special === "row" || special === "col") {
+    // صاروخ طبي مصغّر
+    const vert = special === "col";
+    ctx.translate(cx, cy);
+    if (!vert) ctx.rotate(-Math.PI / 2);
+    ctx.fillStyle = "#ff4d4d";
     ctx.beginPath();
-    ctx.moveTo(cx - r * 0.5, cy);
-    ctx.lineTo(cx + r * 0.28, cy);
-    ctx.stroke();
-    ctx.fillRect(cx + r * 0.26, cy - r * 0.16, r * 0.28, r * 0.32);
-  } else if (special === "col") {
-    ctx.beginPath();
-    ctx.moveTo(cx, cy - r * 0.5);
-    ctx.lineTo(cx, cy + r * 0.28);
-    ctx.stroke();
-    ctx.fillRect(cx - r * 0.16, cy + r * 0.26, r * 0.32, r * 0.28);
-  } else if (special === "bomb") {
-    ctx.beginPath();
-    ctx.arc(cx, cy, r * 0.28, 0, Math.PI * 2);
+    ctx.moveTo(0, -bh * 0.22);
+    ctx.lineTo(bw * 0.12, bh * 0.08);
+    ctx.lineTo(-bw * 0.12, bh * 0.08);
+    ctx.closePath();
     ctx.fill();
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(-bw * 0.06, bh * 0.02, bw * 0.12, bh * 0.14);
+    ctx.fillStyle = "#ffb020";
+    ctx.beginPath();
+    ctx.moveTo(-bw * 0.05, bh * 0.16);
+    ctx.lineTo(0, bh * 0.28 + Math.sin(t * 12) * 2);
+    ctx.lineTo(bw * 0.05, bh * 0.16);
+    ctx.fill();
+  } else if (special === "bomb") {
+    // قنبلة حيوية
+    ctx.beginPath();
+    ctx.arc(cx, cy, bw * 0.22, 0, Math.PI * 2);
+    ctx.fillStyle = "#2a6cff";
+    ctx.fill();
+    ctx.strokeStyle = "#ffd000";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, bw * 0.12, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = "#ffd000";
+    ctx.font = `bold ${Math.max(10, bw * 0.2)}px sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("☢", cx, cy + 1);
   } else if (special === "rainbow") {
-    ["#ff6b5a", "#f4c15d", "#7ef0d8", "#4db8ff"].forEach((c, i) => {
+    const colors = ["#ff4d6a", "#ffb020", "#3dff9a", "#3db8ff", "#c45cff"];
+    colors.forEach((c, i) => {
       ctx.beginPath();
-      ctx.arc(cx, cy, r * (0.48 - i * 0.08), Math.PI, 0);
+      ctx.arc(cx, cy, bw * (0.28 - i * 0.04), Math.PI * 0.15, Math.PI * 0.85);
       ctx.strokeStyle = c;
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = Math.max(2, bw * 0.04);
       ctx.stroke();
     });
   }
@@ -383,25 +371,150 @@ export function drawBoardFrame(ctx, w, h, cell, gap, rows, cols) {
   const gh = rows * cell + (rows - 1) * gap;
   const ox = (w - gw) / 2;
   const oy = (h - gh) / 2;
+
+  // إطار لوحة فاخر
+  const pad = cell * 0.18;
+  roundRectPath(ctx, ox - pad, oy - pad, gw + pad * 2, gh + pad * 2, cell * 0.28);
+  const frame = ctx.createLinearGradient(0, oy - pad, 0, oy + gh + pad);
+  frame.addColorStop(0, "rgba(30, 70, 90, 0.85)");
+  frame.addColorStop(1, "rgba(8, 28, 40, 0.9)");
+  ctx.fillStyle = frame;
+  ctx.fill();
+  ctx.strokeStyle = "rgba(255,215,120,0.35)";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       const x = ox + c * (cell + gap);
       const y = oy + r * (cell + gap);
-      const rr = cell * 0.22;
-      ctx.beginPath();
-      roundedRect(ctx, x, y, cell, cell, rr);
-      ctx.fillStyle = (r + c) % 2 === 0 ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.12)";
+      const rr = cell * 0.24;
+      roundRectPath(ctx, x, y, cell, cell, rr);
+      ctx.fillStyle = (r + c) % 2 === 0 ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.18)";
       ctx.fill();
+      // حافة خلية لامعة
+      ctx.strokeStyle = "rgba(255,255,255,0.06)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
     }
   }
   return { ox, oy, gw, gh };
 }
 
-function roundedRect(ctx, x, y, w, h, r) {
+function roundRectPath(ctx, x, y, w, h, r) {
+  ctx.beginPath();
   ctx.moveTo(x + r, y);
   ctx.arcTo(x + w, y, x + w, y + h, r);
   ctx.arcTo(x + w, y + h, x, y + h, r);
   ctx.arcTo(x, y + h, x, y, r);
   ctx.arcTo(x, y, x + w, y, r);
   ctx.closePath();
+}
+
+/** رسم أيقونات المعززات بأسلوب ورقة الأصول */
+export function drawBoosterIcon(ctx, kind, size) {
+  ctx.clearRect(0, 0, size, size);
+  const s = size;
+  const cx = s / 2;
+  const cy = s / 2;
+
+  if (kind === "syringe" || kind === "row") {
+    // مطرقة طبية
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(-0.35);
+    // رأس
+    const hg = ctx.createLinearGradient(-s * 0.28, 0, s * 0.28, 0);
+    hg.addColorStop(0, "#ff6b6b");
+    hg.addColorStop(1, "#c62828");
+    ctx.fillStyle = hg;
+    roundRectPath(ctx, -s * 0.3, -s * 0.22, s * 0.6, s * 0.28, s * 0.06);
+    ctx.fill();
+    ctx.fillStyle = "#fff";
+    ctx.font = `bold ${s * 0.18}px sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("+", 0, -s * 0.07);
+    // مقبض
+    ctx.fillStyle = "#4fc3f7";
+    roundRectPath(ctx, -s * 0.07, s * 0.02, s * 0.14, s * 0.32, s * 0.04);
+    ctx.fill();
+    ctx.fillStyle = "#ffd54f";
+    ctx.fillRect(-s * 0.09, s * 0.3, s * 0.18, s * 0.06);
+    ctx.restore();
+  } else if (kind === "spray" || kind === "col") {
+    // صاروخ
+    ctx.save();
+    ctx.translate(cx, cy + s * 0.04);
+    ctx.fillStyle = "#ef5350";
+    ctx.beginPath();
+    ctx.moveTo(0, -s * 0.32);
+    ctx.lineTo(s * 0.16, s * 0.05);
+    ctx.lineTo(-s * 0.16, s * 0.05);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "#fff";
+    roundRectPath(ctx, -s * 0.1, -s * 0.02, s * 0.2, s * 0.22, s * 0.04);
+    ctx.fill();
+    ctx.fillStyle = "#ffd54f";
+    ctx.beginPath();
+    ctx.arc(0, s * 0.05, s * 0.06, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#ff9800";
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.08, s * 0.2);
+    ctx.lineTo(0, s * 0.36);
+    ctx.lineTo(s * 0.08, s * 0.2);
+    ctx.fill();
+    ctx.restore();
+  } else if (kind === "pulse" || kind === "bomb") {
+    // قنبلة حيوية
+    const g = ctx.createRadialGradient(cx - s * 0.1, cy - s * 0.1, 2, cx, cy, s * 0.32);
+    g.addColorStop(0, "#64b5f6");
+    g.addColorStop(1, "#1565c0");
+    ctx.beginPath();
+    ctx.arc(cx, cy + s * 0.04, s * 0.28, 0, Math.PI * 2);
+    ctx.fillStyle = g;
+    ctx.fill();
+    ctx.strokeStyle = "#ffd600";
+    ctx.lineWidth = s * 0.04;
+    ctx.beginPath();
+    ctx.arc(cx, cy + s * 0.04, s * 0.14, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = "#ffd600";
+    ctx.font = `${s * 0.22}px sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("☢", cx, cy + s * 0.05);
+    // فتيل
+    ctx.strokeStyle = "#ffcc80";
+    ctx.lineWidth = s * 0.03;
+    ctx.beginPath();
+    ctx.moveTo(cx + s * 0.12, cy - s * 0.18);
+    ctx.quadraticCurveTo(cx + s * 0.22, cy - s * 0.32, cx + s * 0.1, cy - s * 0.34);
+    ctx.stroke();
+    ctx.fillStyle = "#ff5722";
+    ctx.beginPath();
+    ctx.arc(cx + s * 0.1, cy - s * 0.34, s * 0.05, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    // حقنة خضراء / إعادة ترتيب
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(0.5);
+    ctx.fillStyle = "#90a4ae";
+    roundRectPath(ctx, -s * 0.08, -s * 0.32, s * 0.16, s * 0.2, s * 0.03);
+    ctx.fill();
+    const liq = ctx.createLinearGradient(0, -s * 0.1, 0, s * 0.28);
+    liq.addColorStop(0, "#69f0ae");
+    liq.addColorStop(1, "#00c853");
+    ctx.fillStyle = liq;
+    roundRectPath(ctx, -s * 0.1, -s * 0.12, s * 0.2, s * 0.34, s * 0.04);
+    ctx.fill();
+    ctx.fillStyle = "#eceff1";
+    ctx.fillRect(-s * 0.12, s * 0.2, s * 0.24, s * 0.06);
+    ctx.fillStyle = "#b0bec5";
+    ctx.fillRect(-s * 0.03, s * 0.26, s * 0.06, s * 0.12);
+    ctx.restore();
+  }
 }
