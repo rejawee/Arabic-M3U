@@ -1,7 +1,7 @@
 import { LEVELS, CAPSULE_TYPES, getRank, SAVE_KEY } from "./config.js";
 import { Board } from "./board.js";
 import { BoardView } from "./view.js";
-import { CapsulePowder, drawCapsule, drawBoosterIcon } from "./capsule.js";
+import { CapsulePowder, drawCapsule, drawBoosterIcon, CAPSULE_ASPECT } from "./capsule.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -105,7 +105,7 @@ function initHero() {
       ctx.save();
       ctx.translate(p.x, p.y);
       ctx.rotate(p.rot);
-      drawCapsule(ctx, -p.size / 2, -p.size * 0.65, p.size, p.size * 1.3, p.type, p.powder, {
+      drawCapsule(ctx, -p.size / 2, -p.size * 0.52, p.size, p.size * CAPSULE_ASPECT, p.type, p.powder, {
         alpha: p.alpha,
         scale: 1,
       });
@@ -321,9 +321,10 @@ function paintResultHero(won) {
     a.update(0.05);
     b.update(0.05);
   }
-  const size = Math.min(cssW * 0.42, cssH * 0.85);
-  drawCapsule(ctx, cssW * 0.08, cssH * 0.08, size * 0.72, size, "ruby", a, { scale: 1 });
-  drawCapsule(ctx, cssW * 0.48, cssH * 0.05, size * 0.72, size, won ? "jade" : "violet", b, {
+  const size = Math.min(cssW * 0.38, cssH * 0.88);
+  const boxW = size / CAPSULE_ASPECT;
+  drawCapsule(ctx, cssW * 0.06, cssH * 0.06, boxW, size, "ruby", a, { scale: 1 });
+  drawCapsule(ctx, cssW * 0.52, cssH * 0.04, boxW, size, won ? "jade" : "violet", b, {
     scale: 1,
   });
 }
