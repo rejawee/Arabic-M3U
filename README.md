@@ -5,7 +5,7 @@
 
 ## رابط اللعبة
 
-**https://venice-handed-nails-status.trycloudflare.com**
+**https://partially-provision-roads-symphony.trycloudflare.com**
 
 > رابط مؤقت. للرابط الدائم: https://rejawee.github.io/Arabic-M3U/ (يحتاج تفعيل Pages)
 
