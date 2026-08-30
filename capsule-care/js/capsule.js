@@ -4,10 +4,12 @@
  */
 import { CAPSULE_TYPES, CAPSULE_SPRITES, SPECIAL_SPRITES, OBSTACLE_SPRITES, capsuleSpritePath } from "./config.js";
 
-/** نسب مرجع Royal Match: كبسولة chunky تملأ الخلية مثل قطع اللعبة */
-export const CAPSULE_ASPECT = 1.25;
+/** نسب قطع Royal Match: كبسولة ممتلئة داخل الخلية (أعرض من 2:1 النحيف) */
+export const CAPSULE_ASPECT = 1.28;
 export const CAPSULE_FILL = 0.5;
-const SPRITE_FILL = 0.92;
+const SPRITE_FILL = 0.9;
+/** الرسم الإجرائي يطابق مرجع الزجاج+البودرة أفضل من PNG المتفاوت */
+const PREFER_PROCEDURAL = true;
 
 const spriteCache = new Map();
 const obstacleCache = new Map();
@@ -201,7 +203,7 @@ export function drawCapsule(ctx, x, y, w, h, typeId, powder, opts = {}) {
   const baseSprite = getSprite(typeId, null);
   const specialSprite = special ? getSprite(typeId, special) : null;
 
-  if (special === "rainbow" && spriteReady(specialSprite)) {
+  if (special === "rainbow" && spriteReady(specialSprite) && !PREFER_PROCEDURAL) {
     if (selected || highlight > 0) {
       ctx.shadowColor = def.glow;
       ctx.shadowBlur = selected ? 22 : 12;
@@ -212,7 +214,8 @@ export function drawCapsule(ctx, x, y, w, h, typeId, powder, opts = {}) {
     return;
   }
 
-  if (spriteReady(baseSprite)) {
+  // الرسوم المتجهة تطابق مرجع الزجاج+البودرة؛ الـ PNG اختياري فقط
+  if (!PREFER_PROCEDURAL && spriteReady(baseSprite)) {
     ctx.beginPath();
     ctx.ellipse(cx, by + bh + h * 0.012, bw * 0.36, Math.max(2, h * 0.038), 0, 0, Math.PI * 2);
     ctx.fillStyle = "rgba(0,0,0,0.3)";
@@ -231,80 +234,87 @@ export function drawCapsule(ctx, x, y, w, h, typeId, powder, opts = {}) {
   }
 
   const p = def.powder;
+  const shell = def.shell || ["#ffffff", p[1]];
   const t = powder?.time || 0;
   const shake = powder?.shakeAmp || 0;
   const jx = Math.sin(t * 30) * shake * w * 0.018;
   const jy = Math.cos(t * 26) * shake * h * 0.012;
 
-  // ظل ناعم تحت قاعدة الكبسولة
+  // ظل أرضي ناعم
   ctx.beginPath();
-  ctx.ellipse(cx, by + bh + h * 0.015, bw * 0.38, Math.max(2, h * 0.035), 0, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(0,0,0,0.32)";
+  ctx.ellipse(cx, by + bh + h * 0.02, bw * 0.42, Math.max(2.5, h * 0.045), 0, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(0,0,0,0.35)";
   ctx.fill();
 
-  // هالة توهج خارجية (لون الكبسولة)
   if (selected || highlight > 0 || special) {
-    pillPath(ctx, bx - 4 + jx, by - 4 + jy, bw + 8, bh + 8);
+    pillPath(ctx, bx - 5 + jx, by - 5 + jy, bw + 10, bh + 10);
     ctx.strokeStyle = def.glow;
-    ctx.lineWidth = selected ? 5 : 3.5;
+    ctx.lineWidth = selected ? 6 : 4;
     ctx.shadowColor = def.glow;
-    ctx.shadowBlur = selected ? 18 : 10;
+    ctx.shadowBlur = selected ? 20 : 12;
     ctx.stroke();
     ctx.shadowBlur = 0;
   }
 
-  // —— داخل الكبسولة ——
+  // غلاف ملون زجاجي (مثل المرجع — ليس أبيض شفاف فقط)
+  pillPath(ctx, bx + jx, by + jy, bw, bh);
+  const shellGrad = ctx.createLinearGradient(bx, by, bx + bw, by);
+  shellGrad.addColorStop(0, p[3]);
+  shellGrad.addColorStop(0.2, p[2]);
+  shellGrad.addColorStop(0.5, p[1]);
+  shellGrad.addColorStop(0.8, p[2]);
+  shellGrad.addColorStop(1, p[3]);
+  ctx.fillStyle = shellGrad;
+  ctx.fill();
+
   ctx.save();
-  pillPath(ctx, bx + bw * 0.04 + jx, by + bh * 0.02 + jy, bw * 0.92, bh * 0.96);
+  pillPath(ctx, bx + bw * 0.05 + jx, by + bh * 0.03 + jy, bw * 0.9, bh * 0.94);
   ctx.clip();
 
-  // فراغ علوي زجاجي شفاف (النصف العلوي فارغ)
+  // نصف علوي: زجاج شفاف ملوّن يظهر العمق
   const air = ctx.createLinearGradient(bx, by, bx, by + bh * CAPSULE_FILL);
-  air.addColorStop(0, "rgba(255,255,255,0.62)");
-  air.addColorStop(0.35, "rgba(255,255,255,0.18)");
-  air.addColorStop(0.85, "rgba(255,255,255,0.04)");
-  air.addColorStop(1, "rgba(255,255,255,0)");
+  air.addColorStop(0, "rgba(255,255,255,0.75)");
+  air.addColorStop(0.25, shell[1] + "99");
+  air.addColorStop(0.7, p[2] + "44");
+  air.addColorStop(1, p[2] + "22");
   ctx.fillStyle = air;
-  ctx.fillRect(bx, by, bw, bh * CAPSULE_FILL);
+  ctx.fillRect(bx - 2, by - 2, bw + 4, bh * CAPSULE_FILL + 4);
 
-  // كتلة بودرة متوهجة — النصف السفلي فقط (خط التحام 50%)
-  const fillY = by + bh * CAPSULE_FILL + Math.sin(t * 2) * bh * 0.006 + jy * 0.25;
+  // نصف سفلي: بودرة لامعة متوهجة
+  const fillY = by + bh * CAPSULE_FILL + Math.sin(t * 2) * bh * 0.005 + jy * 0.2;
   const body = ctx.createLinearGradient(bx, fillY, bx, by + bh);
   body.addColorStop(0, p[0]);
-  body.addColorStop(0.15, p[1]);
-  body.addColorStop(0.45, p[2]);
-  body.addColorStop(0.75, p[3]);
+  body.addColorStop(0.12, p[1]);
+  body.addColorStop(0.4, p[2]);
+  body.addColorStop(0.72, p[3]);
   body.addColorStop(1, p[4] || p[3]);
   ctx.fillStyle = body;
-
   ctx.beginPath();
   ctx.moveTo(bx - 2, by + bh + 2);
-  ctx.lineTo(bx - 2, fillY + bh * 0.02);
-  for (let i = 0; i <= 14; i++) {
-    const px = bx + (bw * i) / 14;
-    const wave =
-      Math.sin(i * 0.85 + t * 2.4) * bh * 0.014 +
-      Math.sin(i * 2.2 + t * 1.6) * bh * 0.007;
+  ctx.lineTo(bx - 2, fillY);
+  for (let i = 0; i <= 16; i++) {
+    const px = bx + (bw * i) / 16;
+    const wave = Math.sin(i * 0.7 + t * 2.2) * bh * 0.012;
     ctx.lineTo(px, fillY + wave);
   }
   ctx.lineTo(bx + bw + 2, by + bh + 2);
   ctx.closePath();
   ctx.fill();
 
-  // توهج داخلي مركزي للبودرة (مركز النصف السفلي)
-  const glow = ctx.createRadialGradient(cx, by + bh * 0.72, 2, cx, by + bh * 0.74, bw * 0.52);
-  glow.addColorStop(0, p[1] + "cc");
-  glow.addColorStop(0.5, p[2] + "66");
-  glow.addColorStop(1, "transparent");
-  ctx.fillStyle = glow;
+  // توهج داخلي
+  const ig = ctx.createRadialGradient(cx, by + bh * 0.72, 1, cx, by + bh * 0.74, bw * 0.55);
+  ig.addColorStop(0, "#ffffffaa");
+  ig.addColorStop(0.35, p[1] + "88");
+  ig.addColorStop(1, "transparent");
+  ctx.fillStyle = ig;
   ctx.fillRect(bx, fillY, bw, bh);
 
-  // حبيبات glitter متحركة
+  // glitter
   if (powder?.grains) {
     for (const g of powder.grains) {
       const gx = bx + g.x * bw + jx;
       const gy = by + g.y * bh + jy;
-      const gr = Math.max(0.9, g.r * Math.min(bw, bh));
+      const gr = Math.max(1, g.r * Math.min(bw, bh));
       ctx.beginPath();
       ctx.arc(gx, gy, gr, 0, Math.PI * 2);
       if (g.bright) {
@@ -313,7 +323,7 @@ export function drawCapsule(ctx, x, y, w, h, typeId, powder, opts = {}) {
       } else {
         const gg = ctx.createRadialGradient(gx - gr * 0.3, gy - gr * 0.3, 0, gx, gy, gr);
         gg.addColorStop(0, "#ffffff");
-        gg.addColorStop(0.4, p[1]);
+        gg.addColorStop(0.45, p[1]);
         gg.addColorStop(1, p[3]);
         ctx.fillStyle = gg;
         ctx.globalAlpha = alpha;
@@ -322,97 +332,68 @@ export function drawCapsule(ctx, x, y, w, h, typeId, powder, opts = {}) {
       ctx.globalAlpha = alpha;
     }
   }
-
-  // شرارات علوية
   if (powder?.sparks) {
     for (const s of powder.sparks) {
-      const tw = 0.3 + 0.7 * Math.abs(Math.sin(t * s.speed + s.phase));
+      const tw = 0.35 + 0.65 * Math.abs(Math.sin(t * s.speed + s.phase));
       const sx = bx + s.x * bw;
       const sy = by + s.y * bh;
       const sr = s.r * Math.min(bw, bh);
       ctx.globalAlpha = alpha * tw;
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = Math.max(0.7, sr * 0.45);
-      ctx.lineCap = "round";
+      ctx.fillStyle = "#fffde7";
       ctx.beginPath();
-      ctx.moveTo(sx - sr * 2.4, sy);
-      ctx.lineTo(sx + sr * 2.4, sy);
-      ctx.moveTo(sx, sy - sr * 2.2);
-      ctx.lineTo(sx, sy + sr * 2.2);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(sx, sy, sr * 0.7, 0, Math.PI * 2);
-      ctx.fillStyle = "#ffffff";
+      ctx.arc(sx, sy, sr * 1.2, 0, Math.PI * 2);
       ctx.fill();
       ctx.globalAlpha = alpha;
     }
   }
-
   ctx.restore();
 
-  // —— غلاف زجاجي juicy ——
-  // طبقة لون خفيفة على الحافة (Fresnel ملون)
+  // حافة زجاجية بيضاء + rim لوني
   pillPath(ctx, bx + jx, by + jy, bw, bh);
-  const rim = ctx.createLinearGradient(bx, by, bx + bw, by);
-  rim.addColorStop(0, p[2] + "55");
-  rim.addColorStop(0.25, "rgba(255,255,255,0.08)");
-  rim.addColorStop(0.75, "rgba(255,255,255,0.08)");
-  rim.addColorStop(1, p[2] + "55");
-  ctx.fillStyle = rim;
-  ctx.fill();
-
-  // إطار أبيض لامع (Royal Match: حافة زجاجية واضحة)
+  ctx.strokeStyle = "rgba(255,255,255,0.95)";
+  ctx.lineWidth = Math.max(2, bw * 0.06);
+  ctx.stroke();
   pillPath(ctx, bx + jx, by + jy, bw, bh);
-  ctx.strokeStyle = "rgba(255,255,255,0.96)";
-  ctx.lineWidth = Math.max(1.8, bw * 0.055);
+  ctx.strokeStyle = p[2] + "cc";
+  ctx.lineWidth = Math.max(1, bw * 0.02);
   ctx.stroke();
 
-  // إطار لوني خارجي رفيع
-  pillPath(ctx, bx + jx, by + jy, bw, bh);
-  ctx.strokeStyle = p[2] + "bb";
-  ctx.lineWidth = Math.max(0.8, bw * 0.018);
-  ctx.stroke();
-
-  // خط التحام المنتصف (50%)
+  // خط التحام المنتصف
   ctx.save();
   pillPath(ctx, bx + jx, by + jy, bw, bh);
   ctx.clip();
   const seamY = by + bh * CAPSULE_FILL + jy;
   ctx.beginPath();
-  ctx.moveTo(bx + bw * 0.08 + jx, seamY);
-  ctx.lineTo(bx + bw * 0.92 + jx, seamY);
-  ctx.strokeStyle = "rgba(40,70,100,0.45)";
-  ctx.lineWidth = Math.max(1.4, w * 0.022);
+  ctx.moveTo(bx + bw * 0.1 + jx, seamY);
+  ctx.lineTo(bx + bw * 0.9 + jx, seamY);
+  ctx.strokeStyle = "rgba(30,40,60,0.4)";
+  ctx.lineWidth = Math.max(1.5, w * 0.025);
   ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(bx + bw * 0.1 + jx, seamY - 1.2);
-  ctx.lineTo(bx + bw * 0.9 + jx, seamY - 1.2);
-  ctx.strokeStyle = "rgba(255,255,255,0.5)";
-  ctx.lineWidth = 1;
+  ctx.moveTo(bx + bw * 0.12 + jx, seamY - 1.5);
+  ctx.lineTo(bx + bw * 0.88 + jx, seamY - 1.5);
+  ctx.strokeStyle = "rgba(255,255,255,0.55)";
+  ctx.lineWidth = 1.2;
   ctx.stroke();
   ctx.restore();
 
-  // Speculars على القبة العلوية الزجاجية
+  // speculars
   ctx.beginPath();
-  ctx.ellipse(cx - bw * 0.14 + jx, by + bh * 0.14 + jy, bw * 0.14, bh * 0.07, -0.4, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(255,255,255,0.88)";
+  ctx.ellipse(cx - bw * 0.16 + jx, by + bh * 0.16 + jy, bw * 0.16, bh * 0.08, -0.35, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(255,255,255,0.9)";
   ctx.fill();
-
   ctx.beginPath();
-  ctx.ellipse(cx + bw * 0.1 + jx, by + bh * 0.08 + jy, bw * 0.06, bh * 0.025, 0.25, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(255,255,255,0.72)";
+  ctx.ellipse(cx + bw * 0.12 + jx, by + bh * 0.1 + jy, bw * 0.07, bh * 0.03, 0.3, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(255,255,255,0.7)";
   ctx.fill();
-
-  // شريط لمعان أيسر على طول الكبسولة
   ctx.beginPath();
-  ctx.moveTo(bx + bw * 0.22 + jx, by + bh * 0.1 + jy);
-  ctx.quadraticCurveTo(bx + bw * 0.1 + jx, by + bh * CAPSULE_FILL + jy, bx + bw * 0.22 + jx, by + bh * 0.88 + jy);
-  ctx.strokeStyle = "rgba(255,255,255,0.65)";
-  ctx.lineWidth = Math.max(1.2, bw * 0.045);
+  ctx.moveTo(bx + bw * 0.2 + jx, by + bh * 0.12 + jy);
+  ctx.quadraticCurveTo(bx + bw * 0.08 + jx, by + bh * 0.5 + jy, bx + bw * 0.2 + jx, by + bh * 0.88 + jy);
+  ctx.strokeStyle = "rgba(255,255,255,0.55)";
+  ctx.lineWidth = Math.max(1.5, bw * 0.05);
   ctx.lineCap = "round";
   ctx.stroke();
 
-  // قطع خاصة
   if (special) drawSpecialOverlay(ctx, cx + jx, cy + jy, bw, bh, special, def, t);
 
   ctx.restore();
