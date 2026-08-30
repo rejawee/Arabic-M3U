@@ -325,10 +325,20 @@ body {
   letter-spacing: 0.08em;
 }
 
-/* —— Clinic themes —— */
+/* —— Clinic themes & scenes —— */
 #screen-game,
 #screen-story {
   position: relative;
+}
+
+.game-scene-canvas,
+.story-scene-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
 }
 
 .stage-bg {
@@ -337,6 +347,7 @@ body {
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
+  opacity: 0.35;
 }
 
 .stage-bg-glow {
@@ -344,33 +355,8 @@ body {
   inset: 0;
   background:
     radial-gradient(ellipse 90% 55% at 50% -5%, var(--theme-glow1, rgba(126, 240, 216, 0.18)), transparent 60%),
-    radial-gradient(ellipse 70% 50% at 100% 100%, var(--theme-glow2, rgba(29, 184, 166, 0.12)), transparent 55%),
     linear-gradient(165deg, var(--theme-bg1, #0a4a52) 0%, var(--theme-bg2, #062830) 48%, var(--theme-bg3, #041820) 100%);
 }
-
-.stage-bg-decor {
-  position: absolute;
-  inset: 0;
-  opacity: 0.14;
-  font-size: 2.4rem;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-template-rows: repeat(3, 1fr);
-  place-items: center;
-  filter: blur(0.3px);
-}
-
-.stage-bg-decor span {
-  animation: decor-float 6s ease-in-out infinite;
-}
-
-.stage-bg-decor span:nth-child(2) { animation-delay: -1.2s; }
-.stage-bg-decor span:nth-child(3) { animation-delay: -2.4s; }
-.stage-bg-decor span:nth-child(4) { animation-delay: -3.6s; }
-.stage-bg-decor span:nth-child(5) { animation-delay: -0.8s; }
-.stage-bg-decor span:nth-child(6) { animation-delay: -2s; }
-.stage-bg-decor span:nth-child(7) { animation-delay: -3.2s; }
-.stage-bg-decor span:nth-child(8) { animation-delay: -4.4s; }
 
 .story-bg {
   position: absolute;
@@ -405,8 +391,14 @@ body {
 
 /* —— Story —— */
 #screen-story {
-  justify-content: center;
-  padding: 1.25rem;
+  justify-content: flex-end;
+  padding: 0;
+}
+
+#screen-story .story-panel {
+  margin: 0 1rem 1.5rem;
+  max-height: 62%;
+  overflow-y: auto;
 }
 
 .story-panel {
@@ -506,111 +498,204 @@ body {
   margin-bottom: 0.5rem;
 }
 
-/* —— Game —— */
+/* —— Game — Royal Match layout —— */
 #screen-game {
-  padding-bottom: 0.5rem;
-}
-
-#screen-game .game-hud,
-#screen-game .board-wrap,
-#screen-game .boosters {
-  position: relative;
-  z-index: 1;
-}
-
-#screen-game .health-fill {
-  background: linear-gradient(90deg, var(--theme-health-1, var(--coral)), var(--theme-health-2, var(--amber)), var(--theme-health-3, var(--mint)));
-}
-
-#screen-game .hud-stat {
-  border-color: var(--theme-hud-border, rgba(255, 215, 120, 0.28));
-}
-
-.game-hud {
   display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 0.65rem;
-  align-items: center;
-  padding: 0.85rem 0.9rem 0.5rem;
+  grid-template-rows: auto 1fr auto;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
 }
 
-.hud-patient {
+#screen-game .rm-hud,
+#screen-game .board-wrap,
+#screen-game .rm-booster-tray {
+  position: relative;
+  z-index: 2;
+}
+
+/* HUD علوي — مثل Royal Match */
+.rm-hud {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.65rem;
+  background: linear-gradient(180deg, var(--theme-hud-top, #8b2020) 0%, var(--theme-hud-bottom, #5a1010) 100%);
+  border-bottom: 3px solid var(--theme-hud-border, #d4af6a);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+  flex-shrink: 0;
+}
+
+.rm-goals {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
   min-width: 0;
 }
 
-.hud-label {
-  display: block;
+.rm-goals-label,
+.rm-moves-label {
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.75);
+  text-transform: uppercase;
+}
+
+.rm-goals-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.rm-goal-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.35);
   font-size: 0.72rem;
-  margin-bottom: 0.25rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.rm-goal-swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  flex-shrink: 0;
+}
+
+.rm-patient {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 2px solid var(--theme-hud-border, #d4af6a);
+}
+
+.rm-portrait {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 1.5rem;
+  background: radial-gradient(circle at 35% 30%, #fff6, transparent 45%), linear-gradient(145deg, var(--theme-accent, #7ef0d8), var(--theme-accent-soft, #1db8a6));
+  border: 3px solid var(--theme-hud-border, #d4af6a);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  flex-shrink: 0;
+}
+
+.rm-patient-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.rm-patient-text strong {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #fff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: rgba(232, 247, 244, 0.75);
 }
 
-.health-bar {
-  height: 10px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.35);
-  overflow: hidden;
-}
-
-.health-fill {
-  height: 100%;
-  width: 100%;
-  border-radius: inherit;
-  transition: width 0.45s ease;
-}
-
-.hud-stats {
-  display: flex;
-  gap: 0.45rem;
-}
-
-.hud-stat {
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.16), rgba(0, 0, 0, 0.25));
-  border: 1px solid rgba(255, 215, 120, 0.28);
-  border-radius: 16px;
-  padding: 0.4rem 0.65rem;
-  text-align: center;
-  min-width: 58px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
-}
-
-.hud-stat span {
-  display: block;
+.rm-patient-text span {
   font-size: 0.62rem;
-  color: rgba(255, 215, 140, 0.85);
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.75);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.hud-stat strong {
-  font-size: 1.25rem;
-  font-weight: 800;
+.rm-moves {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-self: end;
+  padding: 0.25rem 0.65rem;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fff8e1, #ffe082);
+  border: 2px solid var(--theme-hud-border, #d4af6a);
+  min-width: 52px;
+}
+
+.rm-moves strong {
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: #3e2723;
+  line-height: 1;
+}
+
+.rm-pause {
+  width: 38px;
+  height: 38px;
+  border: 2px solid var(--theme-hud-border, #d4af6a);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.35);
   color: #fff;
+  font-size: 0.75rem;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.rm-booster-tray {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.65));
+  border-top: 2px solid var(--theme-hud-border, rgba(255, 215, 120, 0.35));
+  padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
 .board-wrap {
   position: relative;
-  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.35rem 0.75rem;
+  padding: 0.25rem 0.5rem;
   min-height: 0;
+  overflow: hidden;
 }
 
 #board {
-  width: min(100%, 92vw, 420px);
+  width: min(100%, 96vw, 420px);
+  aspect-ratio: 1;
   height: auto;
   max-height: 100%;
-  border-radius: 28px;
+  border-radius: 20px;
   background: transparent;
   touch-action: none;
   cursor: pointer;
-  filter: drop-shadow(0 18px 40px rgba(0, 0, 0, 0.45));
+  filter: drop-shadow(0 12px 32px rgba(0, 0, 0, 0.5));
 }
+
+/* theme HUD colors per clinic */
+#screen-game[data-theme="neighborhood"] {
+  --theme-hud-top: #1a5c5a;
+  --theme-hud-bottom: #0d3535;
+}
+#screen-game[data-theme="children"] {
+  --theme-hud-top: #7b4397;
+  --theme-hud-bottom: #4a2060;
+}
+#screen-game[data-theme="emergency"] {
+  --theme-hud-top: #8b2020;
+  --theme-hud-bottom: #4a0808;
+}
+#screen-game[data-theme="research"] {
+  --theme-hud-top: #1a3a7a;
+  --theme-hud-bottom: #0a1848;
+}
+
+/* legacy game hud hidden */
+.game-hud { display: none; }
 
 .board-fx {
   position: absolute;
@@ -623,7 +708,7 @@ body {
   display: flex;
   justify-content: center;
   gap: 0.55rem;
-  padding: 0.55rem 0.75rem 1.15rem;
+  padding: 0.5rem 0.75rem 0.85rem;
 }
 
 .booster {

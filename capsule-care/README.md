@@ -6,7 +6,7 @@
 
 طالما بيئة النشر تعمل، افتح:
 
-**https://lie-each-magic-prove.trycloudflare.com**
+**https://aus-swap-vaccine-alan.trycloudflare.com**
 
 > رابط مؤقت (يعمل طالما السيرفر شغّال). للرابط الدائم فعّل GitHub Pages بالأسفل.
 

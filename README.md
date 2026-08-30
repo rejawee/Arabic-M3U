@@ -5,7 +5,7 @@
 
 ## رابط اللعبة
 
-**https://lie-each-magic-prove.trycloudflare.com**
+**https://aus-swap-vaccine-alan.trycloudflare.com**
 
 > رابط مؤقت. للرابط الدائم: https://rejawee.github.io/Arabic-M3U/ (يحتاج تفعيل Pages)
 

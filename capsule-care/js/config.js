@@ -216,6 +216,7 @@ export const LEVELS = [
     types: ["ruby", "azure", "jade", "amber"],
     goals: [{ type: "ruby", count: 18 }],
     blocked: [],
+    sceneProps: ["🌡️", "🧣", "☕", "🍵"],
   },
   {
     id: 2,
@@ -240,6 +241,7 @@ export const LEVELS = [
       [3, 3],
       [4, 3],
     ],
+    sceneProps: ["🍯", "🍋", "💧", "🩹"],
   },
   {
     id: 3,
@@ -262,6 +264,7 @@ export const LEVELS = [
       [7, 0],
       [7, 6],
     ],
+    sceneProps: ["🧸", "🌡️", "🎈", "💊"],
   },
   {
     id: 4,
@@ -284,6 +287,7 @@ export const LEVELS = [
       [4, 3],
       [4, 4],
     ],
+    sceneProps: ["🧴", "🌈", "🩹", "✨"],
   },
   {
     id: 5,
@@ -312,6 +316,7 @@ export const LEVELS = [
       [3, 0],
       [4, 7],
     ],
+    sceneProps: ["🚨", "💉", "⚡", "🚑"],
   },
   {
     id: 6,
@@ -338,6 +343,7 @@ export const LEVELS = [
       [7, 3],
       [7, 4],
     ],
+    sceneProps: ["💨", "💊", "🫁", "⚡"],
   },
   {
     id: 7,
@@ -364,6 +370,7 @@ export const LEVELS = [
       [4, 5],
       [4, 6],
     ],
+    sceneProps: ["🔬", "📋", "☕", "💡"],
   },
   {
     id: 8,
@@ -394,6 +401,7 @@ export const LEVELS = [
       [4, 3],
       [4, 4],
     ],
+    sceneProps: ["🧪", "⚗️", "🧬", "✨"],
   },
 ];
 
