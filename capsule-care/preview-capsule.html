@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>معاينة الكبسولة — مرجع</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #f4f6f8;
+      font-family: Cairo, sans-serif;
+      color: #123;
+    }
+    .wrap {
+      display: flex;
+      gap: 2rem;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    figure { margin: 0; text-align: center; }
+    img, canvas {
+      width: 280px;
+      height: 420px;
+      object-fit: contain;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(0,0,0,.12);
+    }
+    figcaption { margin-top: .6rem; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <figure>
+      <img id="ref" alt="مرجع" />
+      <figcaption>المرجع</figcaption>
+    </figure>
+    <figure>
+      <canvas id="c" width="560" height="840"></canvas>
+      <figcaption>كبسولة اللعبة (فيروزية)</figcaption>
+    </figure>
+  </div>
+  <script type="module">
+    import { CapsulePowder, drawCapsule } from "./js/capsule.js";
+    const img = document.getElementById("ref");
+    img.src = "./assets/capsule-ref.jpg";
+    const canvas = document.getElementById("c");
+    const ctx = canvas.getContext("2d");
+    const powder = new CapsulePowder("cyan", 42);
+    const loop = () => {
+      powder.update(1 / 60);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // نفس نسب المرجع داخل إطار 560×840
+      const box = { x: 60, y: 20, w: 440, h: 800 };
+      drawCapsule(ctx, box.x, box.y, box.w, box.h, "cyan", powder, { scale: 1 });
+      requestAnimationFrame(loop);
+    };
+    loop();
+  </script>
+</body>
+</html>

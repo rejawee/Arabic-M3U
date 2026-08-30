@@ -1,0 +1,580 @@
+import { LEVELS, CAPSULE_TYPES, getRank, SAVE_KEY, BOOSTERS, BOOSTER_IDS, getLevelTheme, CAPSULE_SPRITES, UI_ICONS, boosterSpritePath } from "./config.js";
+import { Board } from "./board.js";
+import { BoardView } from "./view.js";
+import { CapsulePowder, drawCapsule, CAPSULE_ASPECT, preloadAllSprites } from "./capsule.js";
+import { drawClinicScene, drawStoryScene } from "./scenes.js";
+import { JuiceEngine } from "./juice.js";
+
+const $ = (sel) => document.querySelector(sel);
+
+const state = {
+  progress: loadProgress(),
+  levelIndex: 0,
+  board: null,
+  view: null,
+  moves: 0,
+  boosters: { hammer: 3, rocket: 3, bomb: 2, mix: 2 },
+  activeBooster: null,
+  animator: null,
+  currentLevel: null,
+  currentTheme: null,
+  juice: null,
+  prevGoalDone: {},
+};
+
+function loadProgress() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (_) {}
+  return {
+    unlocked: 1,
+    stars: {},
+    totalStars: 0,
+  };
+}
+
+function saveProgress() {
+  localStorage.setItem(SAVE_KEY, JSON.stringify(state.progress));
+}
+
+function showScreen(id) {
+  document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
+  const el = document.getElementById(id);
+  if (el) el.classList.add("active");
+}
+
+function applyTheme(level) {
+  const theme = getLevelTheme(level);
+  const c = theme.colors;
+  state.currentLevel = level;
+  state.currentTheme = theme;
+
+  const root = document.documentElement;
+  root.style.setProperty("--theme-glow1", c.appGlow1);
+  root.style.setProperty("--theme-glow2", c.appGlow2);
+  root.style.setProperty("--theme-bg1", c.stageBg1);
+  root.style.setProperty("--theme-bg2", c.stageBg2);
+  root.style.setProperty("--theme-bg3", c.stageBg3);
+  root.style.setProperty("--theme-accent", c.accent);
+  root.style.setProperty("--theme-accent-soft", c.accentSoft);
+  root.style.setProperty("--theme-hud-border", c.hudBorder);
+  root.style.setProperty("--theme-story-panel", c.storyPanel);
+  root.style.setProperty("--theme-health-1", c.health[0]);
+  root.style.setProperty("--theme-health-2", c.health[1]);
+  root.style.setProperty("--theme-health-3", c.health[2]);
+
+  for (const screenId of ["screen-game", "screen-story"]) {
+    const screen = document.getElementById(screenId);
+    if (screen) screen.dataset.theme = theme.id;
+  }
+
+  paintGameScene(level, theme);
+  paintStoryScene(level, theme);
+
+  if (state.view) state.view.setTheme(theme);
+  return theme;
+}
+
+function resizeSceneCanvas(canvas) {
+  if (!canvas) return { w: 0, h: 0, ctx: null };
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const w = rect.width;
+  const h = rect.height;
+  canvas.width = Math.floor(w * dpr);
+  canvas.height = Math.floor(h * dpr);
+  canvas.style.width = `${w}px`;
+  canvas.style.height = `${h}px`;
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { w, h, ctx };
+}
+
+function paintGameScene(level, theme) {
+  const canvas = $("#game-scene");
+  if (!canvas) return;
+  const { w, h, ctx } = resizeSceneCanvas(canvas);
+  if (!ctx || w < 10) return;
+  drawClinicScene(ctx, w, h, theme, level);
+}
+
+function paintStoryScene(level, theme) {
+  const canvas = $("#story-scene");
+  if (!canvas) return;
+  const { w, h, ctx } = resizeSceneCanvas(canvas);
+  if (!ctx || w < 10) return;
+  drawStoryScene(ctx, w, h, theme, level);
+}
+
+function setupHudPatient(level) {
+  const portrait = $("#hud-portrait");
+  const name = $("#hud-patient-name");
+  const cond = $("#hud-condition");
+  const levelNum = $("#hud-level-num");
+  if (portrait) portrait.textContent = level.emoji;
+  if (name) name.textContent = level.patient;
+  if (cond) cond.textContent = level.condition;
+  if (levelNum) levelNum.textContent = String(level.id);
+
+  const goalsList = $("#hud-goals-list");
+  if (!goalsList) return;
+  goalsList.innerHTML = "";
+  state.prevGoalDone = {};
+  level.goals.forEach((g) => {
+    state.prevGoalDone[g.type] = false;
+    const def = CAPSULE_TYPES[g.type];
+    const chip = document.createElement("span");
+    chip.className = "rm-goal-chip";
+    chip.dataset.type = g.type;
+    chip.innerHTML = `<img class="rm-goal-icon" src="${CAPSULE_SPRITES[g.type]}" alt="" width="18" height="18" /><span class="rm-goal-count">0/${g.count}</span>`;
+    goalsList.appendChild(chip);
+  });
+}
+
+/* —— Hero floating capsules —— */
+function initHero() {
+  const canvas = $("#hero-capsules");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  const types = Object.keys(CAPSULE_TYPES);
+  let w = 0;
+  let h = 0;
+  const pills = [];
+
+  const resize = () => {
+    const dpr = Math.min(2, devicePixelRatio || 1);
+    const rect = canvas.parentElement.getBoundingClientRect();
+    w = rect.width;
+    h = rect.height;
+    canvas.width = Math.floor(w * dpr);
+    canvas.height = Math.floor(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  };
+  resize();
+  window.addEventListener("resize", resize);
+
+  for (let i = 0; i < 12; i++) {
+    const type = types[i % types.length];
+    pills.push({
+      type,
+      x: Math.random() * Math.max(w, 320),
+      y: Math.random() * Math.max(h, 500),
+      size: 56 + Math.random() * 64,
+      rot: (Math.random() - 0.5) * 0.8,
+      vr: (Math.random() - 0.5) * 0.25,
+      vy: 18 + Math.random() * 22,
+      vx: (Math.random() - 0.5) * 14,
+      powder: new CapsulePowder(type, i * 40),
+      alpha: 0.4 + Math.random() * 0.4,
+    });
+  }
+
+  let last = performance.now();
+  const loop = (now) => {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (w < 10) resize();
+    ctx.clearRect(0, 0, w, h);
+
+    // ضوء جوي
+    const g = ctx.createRadialGradient(w * 0.5, h * 0.2, 20, w * 0.5, h * 0.35, w * 0.8);
+    g.addColorStop(0, "rgba(126,240,216,0.12)");
+    g.addColorStop(1, "transparent");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+
+    for (const p of pills) {
+      p.powder.update(dt);
+      p.y += p.vy * dt;
+      p.x += p.vx * dt + Math.sin(now / 900 + p.size) * 8 * dt;
+      p.rot += p.vr * dt;
+      if (p.y > h + p.size) {
+        p.y = -p.size;
+        p.x = Math.random() * w;
+      }
+      if (p.x < -p.size) p.x = w + p.size;
+      if (p.x > w + p.size) p.x = -p.size;
+
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      drawCapsule(ctx, -p.size / 2, -p.size * 0.52, p.size, p.size * CAPSULE_ASPECT, p.type, p.powder, {
+        alpha: p.alpha,
+        scale: 1,
+      });
+      ctx.restore();
+    }
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+}
+
+/* —— Map —— */
+function renderMap() {
+  const path = $("#map-path");
+  path.innerHTML = "";
+  const rank = getRank(state.progress.totalStars);
+  $("#doctor-rank").textContent = rank.title;
+  $("#map-stars").innerHTML = `<img class="ui-icon ui-icon--sm" src="${UI_ICONS.star}" alt="" width="18" height="18" /><span id="map-stars-count">${state.progress.totalStars}</span>`;
+
+  LEVELS.forEach((lv, i) => {
+    const unlocked = lv.id <= state.progress.unlocked;
+    const stars = state.progress.stars[lv.id] || 0;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = `clinic-node${stars ? " done" : ""}`;
+    btn.disabled = !unlocked;
+    btn.dataset.theme = getLevelTheme(lv).id;
+    btn.style.animationDelay = `${i * 0.05}s`;
+    btn.innerHTML = `
+      <div class="clinic-badge">${lv.clinicIcon}</div>
+      <div class="clinic-meta">
+        <h3>${lv.id}. ${lv.patient}</h3>
+        <p>${lv.clinic} — ${lv.condition}</p>
+        <div class="clinic-stars">${unlocked ? "★".repeat(stars) + "☆".repeat(3 - stars) : "🔒 مقفل"}</div>
+      </div>`;
+    btn.addEventListener("click", () => openStory(i));
+    path.appendChild(btn);
+  });
+}
+
+function openStory(index) {
+  state.levelIndex = index;
+  const lv = LEVELS[index];
+  const theme = applyTheme(lv);
+  $("#story-clinic").textContent = `${theme.icon} ${lv.clinic}`;
+  $("#patient-name").textContent = lv.patient;
+  $("#patient-condition").textContent = lv.condition;
+  $("#story-text").textContent = lv.story;
+  const avatar = $("#patient-avatar");
+  avatar.dataset.emoji = lv.emoji;
+  avatar.setAttribute("data-emoji", lv.emoji);
+  avatar.style.setProperty("--e", `"${lv.emoji}"`);
+
+  const objs = $("#story-objectives");
+  objs.innerHTML = "";
+  lv.goals.forEach((g) => {
+    const def = CAPSULE_TYPES[g.type];
+    const chip = document.createElement("div");
+    chip.className = "obj-chip";
+    chip.innerHTML = `<img class="obj-capsule-icon" src="${CAPSULE_SPRITES[g.type]}" alt="" width="20" height="20" />×${g.count} ${def.name}`;
+    objs.appendChild(chip);
+  });
+  const movesChip = document.createElement("div");
+  movesChip.className = "obj-chip";
+  movesChip.textContent = `${lv.moves} حركة`;
+  objs.appendChild(movesChip);
+
+  showScreen("screen-story");
+}
+
+/* —— Gameplay —— */
+function startLevel() {
+  const lv = LEVELS[state.levelIndex];
+  applyTheme(lv);
+  state.moves = lv.moves;
+  state.activeBooster = null;
+  state.board = new Board(lv);
+  state.board.init();
+  state.board.onCascadeStep = (count, special) => state.juice?.onCascadeStep(count, special);
+  state.board.onInvalidSwap = () => state.juice?.onInvalidSwap();
+  state.board.onBigMatch = (count) => state.juice?.onBigMatch(count);
+
+  const canvas = $("#board");
+  if (!state.view) {
+    state.view = new BoardView(canvas);
+    state.view.onSwap = handleSwap;
+    state.view.onCellTap = handleBoosterTap;
+  }
+  if (!state.juice) {
+    state.juice = new JuiceEngine($("#juice-layer"), $("#board-wrap"));
+  }
+  state.view.juice = state.juice;
+  state.juice.start();
+  state.view.setBoard(state.board);
+  state.view.boosterMode = null;
+  state.view.start();
+  state.animator = state.view.createAnimator();
+
+  setupHudPatient(lv);
+  updateHud();
+  updateBoosterUI();
+  showScreen("screen-game");
+  requestAnimationFrame(() => {
+    if (state.view) state.view._resize();
+    paintGameScene(lv, getLevelTheme(lv));
+  });
+}
+
+function updateHud() {
+  const movesEl = $("#hud-moves");
+  if (movesEl) {
+    movesEl.textContent = String(state.moves);
+    movesEl.classList.remove("moves-pulse");
+    void movesEl.offsetWidth;
+    movesEl.classList.add("moves-pulse");
+  }
+  if (!state.board) return;
+  const progress = state.board.goalProgress();
+  const goalsList = $("#hud-goals-list");
+  if (goalsList) {
+    const lv = LEVELS[state.levelIndex];
+    let gi = 0;
+    lv.goals.forEach((g) => {
+      const chip = goalsList.children[gi];
+      if (chip) {
+        const done = state.board.collected[g.type] || 0;
+        chip.querySelector(".rm-goal-count").textContent = `${done}/${g.count}`;
+        const complete = done >= g.count;
+        chip.classList.toggle("rm-goal-chip--done", complete);
+        chip.style.opacity = complete ? "0.65" : "1";
+        if (complete && !state.prevGoalDone[g.type]) {
+          state.prevGoalDone[g.type] = true;
+          state.juice?.onGoalComplete();
+        }
+      }
+      gi++;
+    });
+  }
+}
+
+function syncBoosterIcon(btn, id) {
+  const img = btn?.querySelector(".booster-icon");
+  if (!img) return;
+  let iconState = "default";
+  if (btn.disabled) iconState = "disabled";
+  else if (state.activeBooster === id) iconState = "active";
+  img.src = boosterSpritePath(id, iconState);
+}
+
+function updateBoosterUI() {
+  for (const id of BOOSTER_IDS) {
+    const el = $(`#boost-${id}`);
+    if (el) el.textContent = String(state.boosters[id]);
+    const btn = document.querySelector(`.booster[data-booster="${id}"]`);
+    if (btn) {
+      btn.disabled = state.boosters[id] <= 0;
+      btn.classList.toggle("active", state.activeBooster === id && !btn.disabled);
+      syncBoosterIcon(btn, id);
+    }
+  }
+}
+
+async function handleSwap(r1, c1, r2, c2) {
+  if (state.moves <= 0 || state.board.busy) return;
+  const ok = await state.board.swap(r1, c1, r2, c2, state.animator);
+  if (!ok) return;
+  state.moves--;
+  updateHud();
+  checkEnd();
+}
+
+async function handleBoosterTap(r, c, kind) {
+  const booster = BOOSTERS[kind];
+  const boardKey = booster?.boardKey || kind;
+  if (!kind || state.boosters[kind] <= 0) return;
+  if (boardKey !== "shuffle" && state.board.isBlocked(r, c)) return;
+
+  const used = await state.board.useBooster(boardKey, r, c, state.animator);
+  if (!used) return;
+  state.boosters[kind]--;
+  state.activeBooster = null;
+  state.view.boosterMode = null;
+  updateBoosterUI();
+  updateHud();
+  checkEnd();
+}
+
+function checkEnd() {
+  if (state.board.goalsDone()) {
+    endLevel(true);
+  } else if (state.moves <= 0) {
+    endLevel(false);
+  }
+}
+
+function endLevel(won) {
+  const lv = LEVELS[state.levelIndex];
+  const title = $("#result-title");
+  const msg = $("#result-msg");
+  const starsEl = $("#result-stars");
+  const btnNext = $("#btn-next");
+  const eyebrow = $("#result-eyebrow");
+
+  if (won) {
+    state.juice?.onLevelWin();
+    let stars = 1;
+    if (state.moves >= Math.floor(lv.moves * 0.25)) stars = 2;
+    if (state.moves >= Math.floor(lv.moves * 0.45)) stars = 3;
+    const prev = state.progress.stars[lv.id] || 0;
+    if (stars > prev) {
+      state.progress.totalStars += stars - prev;
+      state.progress.stars[lv.id] = stars;
+    }
+    if (state.progress.unlocked < lv.id + 1 && lv.id < LEVELS.length) {
+      state.progress.unlocked = lv.id + 1;
+    }
+    if (lv.id === LEVELS.length) {
+      state.progress.unlocked = LEVELS.length;
+    }
+    saveProgress();
+
+    eyebrow.textContent = "LAB COMPLETE";
+    title.textContent = "أتممت مختبر الكبسولة";
+    msg.textContent = `${lv.patient} تحسّن. بودرة دقيقة وألوان بارزة تحت إضاءة المختبر — أعد التجربة لتصقل دقتك.`;
+    starsEl.innerHTML = "";
+    for (let i = 0; i < 3; i++) {
+      const star = document.createElement("img");
+      star.className = "result-star-icon" + (i < stars ? " lit" : "");
+      star.src = UI_ICONS.star;
+      star.alt = i < stars ? "نجمة" : "فارغ";
+      star.width = 36;
+      star.height = 36;
+      starsEl.appendChild(star);
+    }
+    btnNext.hidden = lv.id >= LEVELS.length;
+    btnNext.textContent = lv.id >= LEVELS.length ? "أنت عميد العيادة" : "العب من جديد — المريض التالي";
+    paintResultHero(true);
+  } else {
+    eyebrow.textContent = "LAB FAILED";
+    title.textContent = "لم تكتمل الوصفة";
+    msg.textContent = `الحركات نفدت قبل شفاء ${lv.patient}. أعد ترتيب الكبسولات وحاول مجدداً أيها الطبيب.`;
+    starsEl.innerHTML = "";
+    for (let i = 0; i < 3; i++) {
+      const star = document.createElement("img");
+      star.className = "result-star-icon";
+      star.src = UI_ICONS.star;
+      star.alt = "فارغ";
+      star.width = 36;
+      star.height = 36;
+      star.style.opacity = "0.28";
+      star.style.filter = "grayscale(1)";
+      starsEl.appendChild(star);
+    }
+    btnNext.hidden = true;
+    paintResultHero(false);
+  }
+
+  $("#btn-continue").hidden = false;
+  showScreen("screen-result");
+}
+
+function paintResultHero(won) {
+  const canvas = $("#result-hero");
+  if (!canvas) return;
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  const cssW = canvas.clientWidth || 360;
+  const cssH = canvas.clientHeight || 240;
+  canvas.width = Math.floor(cssW * dpr);
+  canvas.height = Math.floor(cssH * dpr);
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, cssW, cssH);
+
+  // إضاءة درامية
+  const g = ctx.createRadialGradient(cssW * 0.5, cssH * 0.55, 10, cssW * 0.5, cssH * 0.5, cssW * 0.7);
+  g.addColorStop(0, won ? "rgba(80,40,20,0.55)" : "rgba(40,20,40,0.4)");
+  g.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, cssW, cssH);
+
+  const a = new CapsulePowder("ruby", 11);
+  const b = new CapsulePowder(won ? "jade" : "violet", 22);
+  for (let i = 0; i < 30; i++) {
+    a.update(0.05);
+    b.update(0.05);
+  }
+  const size = Math.min(cssW * 0.38, cssH * 0.88);
+  const boxW = size / CAPSULE_ASPECT;
+  drawCapsule(ctx, cssW * 0.06, cssH * 0.06, boxW, size, "ruby", a, { scale: 1 });
+  drawCapsule(ctx, cssW * 0.52, cssH * 0.04, boxW, size, won ? "jade" : "violet", b, {
+    scale: 1,
+  });
+}
+
+function wireUI() {
+  $("#btn-start").addEventListener("click", () => {
+    renderMap();
+    showScreen("screen-map");
+  });
+  $("#btn-continue").addEventListener("click", () => {
+    renderMap();
+    showScreen("screen-map");
+  });
+  $("#btn-map-home").addEventListener("click", () => showScreen("screen-title"));
+  $("#btn-play-level").addEventListener("click", startLevel);
+  $("#btn-story-back").addEventListener("click", () => {
+    renderMap();
+    showScreen("screen-map");
+  });
+  $("#btn-pause").addEventListener("click", () => {
+    $("#overlay-pause").hidden = false;
+  });
+  $("#btn-resume").addEventListener("click", () => {
+    $("#overlay-pause").hidden = true;
+  });
+  $("#btn-quit-level").addEventListener("click", () => {
+    $("#overlay-pause").hidden = true;
+    renderMap();
+    showScreen("screen-map");
+  });
+  $("#btn-retry").addEventListener("click", startLevel);
+  $("#btn-to-map").addEventListener("click", () => {
+    renderMap();
+    showScreen("screen-map");
+  });
+  $("#btn-next").addEventListener("click", () => {
+    if (state.levelIndex < LEVELS.length - 1) {
+      openStory(state.levelIndex + 1);
+    } else {
+      renderMap();
+      showScreen("screen-map");
+    }
+  });
+
+  document.querySelectorAll(".booster").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const kind = btn.dataset.booster;
+      if (state.boosters[kind] <= 0) return;
+      if (kind === "mix") {
+        handleBoosterTap(0, 0, "mix");
+        return;
+      }
+      if (state.activeBooster === kind) {
+        state.activeBooster = null;
+        state.view.boosterMode = null;
+        updateBoosterUI();
+        return;
+      }
+      state.activeBooster = kind;
+      state.view.boosterMode = kind;
+      updateBoosterUI();
+    });
+  });
+
+  // إظهار متابعة إن وُجد تقدم
+  if (state.progress.totalStars > 0 || state.progress.unlocked > 1) {
+    $("#btn-continue").hidden = false;
+  }
+}
+
+/* إصلاح عرض إيموجي المريض عبر CSS content */
+const styleFix = document.createElement("style");
+styleFix.textContent = `.patient-avatar::after { content: attr(data-emoji); }`;
+document.head.appendChild(styleFix);
+
+wireUI();
+preloadAllSprites();
+initHero();
+
+window.addEventListener("resize", () => {
+  if (state.view?.board) state.view._resize();
+  if (state.currentLevel && state.currentTheme) {
+    paintGameScene(state.currentLevel, state.currentTheme);
+    paintStoryScene(state.currentLevel, state.currentTheme);
+  }
+});
+
+console.info("شفاء — عيادة الكبسولات جاهزة");

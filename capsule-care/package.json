@@ -1,0 +1,10 @@
+{
+  "name": "shifa-capsule-care",
+  "version": "1.0.0",
+  "description": "شفاء — لعبة مطابقة كبسولات طبية احترافية",
+  "private": true,
+  "scripts": {
+    "start": "npx --yes serve -l 4173 .",
+    "dev": "npx --yes serve -l 4173 ."
+  }
+}
