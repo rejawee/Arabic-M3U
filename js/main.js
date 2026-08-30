@@ -288,7 +288,10 @@ function startLevel() {
   updateHud();
   updateBoosterUI();
   showScreen("screen-game");
-  requestAnimationFrame(() => paintGameScene(lv, getLevelTheme(lv)));
+  requestAnimationFrame(() => {
+    if (state.view) state.view._resize();
+    paintGameScene(lv, getLevelTheme(lv));
+  });
 }
 
 function updateHud() {
@@ -525,6 +528,7 @@ paintBoosterIcons();
 initHero();
 
 window.addEventListener("resize", () => {
+  if (state.view?.board) state.view._resize();
   if (state.currentLevel && state.currentTheme) {
     paintGameScene(state.currentLevel, state.currentTheme);
     paintStoryScene(state.currentLevel, state.currentTheme);

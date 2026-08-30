@@ -23,6 +23,9 @@ export class BoardView {
     this.boosterMode = null;
     this.theme = null;
     this._bindInput();
+    if (typeof ResizeObserver !== "undefined") {
+      this._ro = new ResizeObserver(() => this._resize());
+    }
   }
 
   setTheme(theme) {
@@ -33,6 +36,10 @@ export class BoardView {
     this.board = board;
     this.selected = null;
     this._resize();
+    if (this._ro && this.canvas.parentElement) {
+      this._ro.disconnect();
+      this._ro.observe(this.canvas.parentElement);
+    }
   }
 
   start() {
@@ -57,8 +64,11 @@ export class BoardView {
   _resize() {
     if (!this.board) return;
     const dpr = Math.min(2.5, window.devicePixelRatio || 1);
-    const css = Math.min(420, this.canvas.parentElement?.clientWidth || 420);
-    const size = Math.floor(css);
+    const wrap = this.canvas.parentElement;
+    const pad = 8;
+    const availW = Math.max(80, (wrap?.clientWidth || 320) - pad);
+    const availH = Math.max(80, (wrap?.clientHeight || 320) - pad);
+    const size = Math.floor(Math.min(availW, availH, 520));
     this.canvas.style.width = `${size}px`;
     this.canvas.style.height = `${size}px`;
     this.canvas.width = Math.floor(size * dpr);
@@ -66,8 +76,8 @@ export class BoardView {
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this.cssSize = size;
     const maxDim = Math.max(this.board.rows, this.board.cols);
-    this.gap = Math.max(4, size * 0.012);
-    this.cell = (size - this.gap * (maxDim + 1) - size * 0.04) / maxDim;
+    this.gap = Math.max(3, size * 0.011);
+    this.cell = (size - this.gap * (maxDim + 1) - size * 0.035) / maxDim;
   }
 
   cellAt(r, c) {

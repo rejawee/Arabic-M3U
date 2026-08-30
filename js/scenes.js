@@ -4,8 +4,8 @@
 
 const ROOMS = {
   neighborhood: {
-    wallTop: "#6aabbf",
-    wallBottom: "#4a8498",
+    wallTop: "#7ec8e3",
+    wallBottom: "#4a8fa8",
     trim: "#d4af6a",
     floor: "#b8884a",
     floorDark: "#8a6230",
@@ -56,7 +56,7 @@ export function drawClinicScene(ctx, w, h, theme, level) {
 
   ctx.clearRect(0, 0, w, h);
 
-  const floorY = h * 0.58;
+  const floorY = h * 0.68;
   const wallH = floorY;
 
   // سقف
