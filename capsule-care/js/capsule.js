@@ -2,11 +2,35 @@
  * كبسولات Royal Match طبية — أسلوب juicy ثلاثي الأبعاد
  * غلاف زجاجي لامع + بودرة متوهجة متحركة + هالة اختيار + قطع خاصة
  */
-import { CAPSULE_TYPES } from "./config.js";
+import { CAPSULE_TYPES, CAPSULE_SPRITES, SPECIAL_SPRITES, capsuleSpritePath } from "./config.js";
 
 /** نسب مرجع Royal Match: كبسولة طويلة ضيقة (~2:1) */
 export const CAPSULE_ASPECT = 2.05;
 export const CAPSULE_FILL = 0.5;
+
+const spriteCache = new Map();
+
+export function preloadCapsuleSprites() {
+  const paths = { ...CAPSULE_SPRITES, ...SPECIAL_SPRITES };
+  for (const [key, src] of Object.entries(paths)) {
+    if (spriteCache.has(key)) continue;
+    const img = new Image();
+    img.src = src;
+    spriteCache.set(key, img);
+  }
+}
+
+function getSprite(typeId, special) {
+  const src = capsuleSpritePath(typeId, special);
+  for (const [key, path] of Object.entries({ ...CAPSULE_SPRITES, ...SPECIAL_SPRITES })) {
+    if (path === src) return spriteCache.get(key);
+  }
+  return spriteCache.get(typeId);
+}
+
+function spriteReady(img) {
+  return img && img.complete && img.naturalWidth > 0;
+}
 
 /** يحسب أبعاد الجسم داخل خلية مربعة أو مستطيلة مع الحفاظ على نسبة المرجع */
 export function capsuleBounds(x, y, w, h) {
@@ -157,6 +181,34 @@ export function drawCapsule(ctx, x, y, w, h, typeId, powder, opts = {}) {
   ctx.translate(-cx, -cy);
 
   const { bw, bh, bx, by } = capsuleBounds(x, y, w, h);
+  const baseSprite = getSprite(typeId, null);
+  const specialSprite = special ? getSprite(typeId, special) : null;
+
+  if (special === "rainbow" && spriteReady(specialSprite)) {
+    if (selected || highlight > 0) {
+      ctx.shadowColor = def.glow;
+      ctx.shadowBlur = selected ? 22 : 12;
+    }
+    ctx.drawImage(specialSprite, bx, by, bw, bh);
+    ctx.shadowBlur = 0;
+    ctx.restore();
+    return;
+  }
+
+  if (spriteReady(baseSprite)) {
+    if (selected || highlight > 0) {
+      ctx.shadowColor = def.glow;
+      ctx.shadowBlur = selected ? 22 : 12;
+    }
+    ctx.drawImage(baseSprite, bx, by, bw, bh);
+    ctx.shadowBlur = 0;
+    if (special) {
+      drawSpecialOverlay(ctx, cx, cy, bw, bh, special, def, powder?.time || 0);
+    }
+    ctx.restore();
+    return;
+  }
+
   const p = def.powder;
   const t = powder?.time || 0;
   const shake = powder?.shakeAmp || 0;

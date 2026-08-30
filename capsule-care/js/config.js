@@ -46,6 +46,65 @@ export const CAPSULE_TYPES = {
 
 export const TYPE_IDS = Object.keys(CAPSULE_TYPES);
 
+/** sprites كبسولات 3D — Royal Match */
+export const CAPSULE_SPRITES = {
+  ruby: "assets/capsules/ruby.png",
+  azure: "assets/capsules/azure.png",
+  jade: "assets/capsules/jade.png",
+  amber: "assets/capsules/amber.png",
+  violet: "assets/capsules/violet.png",
+  cyan: "assets/capsules/cyan.png",
+};
+
+export const SPECIAL_SPRITES = {
+  fire: "assets/capsules/fire.png",
+  ice: "assets/capsules/ice.png",
+  rainbow: "assets/capsules/rainbow.png",
+};
+
+/** أيقونات UI */
+export const UI_ICONS = {
+  star: "assets/ui/star.png",
+  coin: "assets/ui/coin.png",
+  heart: "assets/ui/heart.png",
+  treasure: "assets/ui/treasure.png",
+};
+
+/** معززات — default / active / disabled */
+export const BOOSTER_SPRITES = {
+  hammer: {
+    default: "assets/boosters/hammer.png",
+    active: "assets/boosters/states/hammer-active.png",
+    disabled: "assets/boosters/states/hammer-disabled.png",
+  },
+  rocket: {
+    default: "assets/boosters/rocket.png",
+    active: "assets/boosters/states/rocket-active.png",
+    disabled: "assets/boosters/states/rocket-disabled.png",
+  },
+  bomb: {
+    default: "assets/boosters/bomb.png",
+    active: "assets/boosters/states/bomb-active.png",
+    disabled: "assets/boosters/states/bomb-disabled.png",
+  },
+  mix: {
+    default: "assets/boosters/mix.png",
+    active: "assets/boosters/states/mix-active.png",
+    disabled: "assets/boosters/states/mix-disabled.png",
+  },
+};
+
+export function capsuleSpritePath(typeId, special = null) {
+  if (special === "rainbow") return SPECIAL_SPRITES.rainbow;
+  if (special === "bomb") return SPECIAL_SPRITES.fire;
+  if (special === "row" || special === "col") return SPECIAL_SPRITES.ice;
+  return CAPSULE_SPRITES[typeId] || CAPSULE_SPRITES.ruby;
+}
+
+export function boosterSpritePath(id, state = "default") {
+  return BOOSTER_SPRITES[id]?.[state] || BOOSTER_SPRITES[id]?.default;
+}
+
 /** ثيمات العيادات — خلفيات وألوان لكل مرحلة */
 export const CLINIC_THEMES = {
   neighborhood: {

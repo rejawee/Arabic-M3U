@@ -249,6 +249,9 @@ body {
 
 .stat-pill {
   min-width: 56px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   text-align: center;
   padding: 0.45rem 0.7rem;
   border-radius: 999px;
@@ -256,6 +259,30 @@ body {
   color: var(--amber);
   font-weight: 700;
   font-size: 0.9rem;
+}
+
+.ui-icon {
+  display: block;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
+}
+
+.ui-icon--sm {
+  width: 18px;
+  height: 18px;
+}
+
+.obj-capsule-icon,
+.rm-goal-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  flex-shrink: 0;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.35));
+}
+
+.rm-goal-swatch {
+  display: none;
 }
 
 .map-scroll {
@@ -814,13 +841,12 @@ body {
 }
 
 .booster.active {
-  filter: drop-shadow(0 0 10px rgba(255, 235, 120, 0.85)) brightness(1.08);
   transform: scale(1.06);
 }
 
 .booster:disabled {
-  opacity: 0.4;
-  filter: grayscale(0.55) brightness(0.75);
+  opacity: 1;
+  filter: none;
 }
 
 .booster-icon {
@@ -964,12 +990,20 @@ body {
 }
 
 .lab-complete-body .stars {
-  font-size: 1.85rem;
-  color: #ffc107;
-  letter-spacing: 0.18em;
+  display: flex;
+  justify-content: center;
+  gap: 0.35rem;
   margin-bottom: 1.1rem;
-  min-height: 2rem;
-  text-shadow: 0 0 18px rgba(255, 193, 7, 0.45);
+  min-height: 2.5rem;
+}
+
+.result-star-icon {
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+}
+
+.result-star-icon.lit {
+  filter: drop-shadow(0 0 12px rgba(255, 193, 7, 0.65)) drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35));
 }
 
 .lab-complete-body .result-actions {

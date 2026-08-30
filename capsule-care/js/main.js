@@ -1,7 +1,7 @@
-import { LEVELS, CAPSULE_TYPES, getRank, SAVE_KEY, BOOSTERS, BOOSTER_IDS, getLevelTheme } from "./config.js";
+import { LEVELS, CAPSULE_TYPES, getRank, SAVE_KEY, BOOSTERS, BOOSTER_IDS, getLevelTheme, CAPSULE_SPRITES, UI_ICONS, boosterSpritePath } from "./config.js";
 import { Board } from "./board.js";
 import { BoardView } from "./view.js";
-import { CapsulePowder, drawCapsule, CAPSULE_ASPECT } from "./capsule.js";
+import { CapsulePowder, drawCapsule, CAPSULE_ASPECT, preloadCapsuleSprites } from "./capsule.js";
 import { drawClinicScene, drawStoryScene } from "./scenes.js";
 import { JuiceEngine } from "./juice.js";
 
@@ -127,7 +127,7 @@ function setupHudPatient(level) {
     const chip = document.createElement("span");
     chip.className = "rm-goal-chip";
     chip.dataset.type = g.type;
-    chip.innerHTML = `<span class="rm-goal-swatch" style="background:linear-gradient(180deg,${def.powder[1]},${def.powder[3]})"></span><span class="rm-goal-count">0/${g.count}</span>`;
+    chip.innerHTML = `<img class="rm-goal-icon" src="${CAPSULE_SPRITES[g.type]}" alt="" width="18" height="18" /><span class="rm-goal-count">0/${g.count}</span>`;
     goalsList.appendChild(chip);
   });
 }
@@ -216,7 +216,7 @@ function renderMap() {
   path.innerHTML = "";
   const rank = getRank(state.progress.totalStars);
   $("#doctor-rank").textContent = rank.title;
-  $("#map-stars").textContent = `★ ${state.progress.totalStars}`;
+  $("#map-stars").innerHTML = `<img class="ui-icon ui-icon--sm" src="${UI_ICONS.star}" alt="" width="18" height="18" /><span id="map-stars-count">${state.progress.totalStars}</span>`;
 
   LEVELS.forEach((lv, i) => {
     const unlocked = lv.id <= state.progress.unlocked;
@@ -258,7 +258,7 @@ function openStory(index) {
     const def = CAPSULE_TYPES[g.type];
     const chip = document.createElement("div");
     chip.className = "obj-chip";
-    chip.innerHTML = `<span class="obj-swatch" style="background:linear-gradient(180deg,${def.powder[1]},${def.powder[3]})"></span>×${g.count} ${def.name}`;
+    chip.innerHTML = `<img class="obj-capsule-icon" src="${CAPSULE_SPRITES[g.type]}" alt="" width="20" height="20" />×${g.count} ${def.name}`;
     objs.appendChild(chip);
   });
   const movesChip = document.createElement("div");
@@ -275,8 +275,6 @@ function startLevel() {
   applyTheme(lv);
   state.moves = lv.moves;
   state.activeBooster = null;
-  document.querySelectorAll(".booster").forEach((b) => b.classList.remove("active"));
-
   state.board = new Board(lv);
   state.board.init();
   state.board.onCascadeStep = (count, special) => state.juice?.onCascadeStep(count, special);
@@ -341,12 +339,25 @@ function updateHud() {
   }
 }
 
+function syncBoosterIcon(btn, id) {
+  const img = btn?.querySelector(".booster-icon");
+  if (!img) return;
+  let iconState = "default";
+  if (btn.disabled) iconState = "disabled";
+  else if (state.activeBooster === id) iconState = "active";
+  img.src = boosterSpritePath(id, iconState);
+}
+
 function updateBoosterUI() {
   for (const id of BOOSTER_IDS) {
     const el = $(`#boost-${id}`);
     if (el) el.textContent = String(state.boosters[id]);
     const btn = document.querySelector(`.booster[data-booster="${id}"]`);
-    if (btn) btn.disabled = state.boosters[id] <= 0;
+    if (btn) {
+      btn.disabled = state.boosters[id] <= 0;
+      btn.classList.toggle("active", state.activeBooster === id && !btn.disabled);
+      syncBoosterIcon(btn, id);
+    }
   }
 }
 
@@ -370,7 +381,6 @@ async function handleBoosterTap(r, c, kind) {
   state.boosters[kind]--;
   state.activeBooster = null;
   state.view.boosterMode = null;
-  document.querySelectorAll(".booster").forEach((b) => b.classList.remove("active"));
   updateBoosterUI();
   updateHud();
   checkEnd();
@@ -413,7 +423,16 @@ function endLevel(won) {
     eyebrow.textContent = "LAB COMPLETE";
     title.textContent = "أتممت مختبر الكبسولة";
     msg.textContent = `${lv.patient} تحسّن. بودرة دقيقة وألوان بارزة تحت إضاءة المختبر — أعد التجربة لتصقل دقتك.`;
-    starsEl.textContent = "★".repeat(stars) + "☆".repeat(3 - stars);
+    starsEl.innerHTML = "";
+    for (let i = 0; i < 3; i++) {
+      const star = document.createElement("img");
+      star.className = "result-star-icon" + (i < stars ? " lit" : "");
+      star.src = UI_ICONS.star;
+      star.alt = i < stars ? "نجمة" : "فارغ";
+      star.width = 36;
+      star.height = 36;
+      starsEl.appendChild(star);
+    }
     btnNext.hidden = lv.id >= LEVELS.length;
     btnNext.textContent = lv.id >= LEVELS.length ? "أنت عميد العيادة" : "العب من جديد — المريض التالي";
     paintResultHero(true);
@@ -421,7 +440,18 @@ function endLevel(won) {
     eyebrow.textContent = "LAB FAILED";
     title.textContent = "لم تكتمل الوصفة";
     msg.textContent = `الحركات نفدت قبل شفاء ${lv.patient}. أعد ترتيب الكبسولات وحاول مجدداً أيها الطبيب.`;
-    starsEl.textContent = "☆☆☆";
+    starsEl.innerHTML = "";
+    for (let i = 0; i < 3; i++) {
+      const star = document.createElement("img");
+      star.className = "result-star-icon";
+      star.src = UI_ICONS.star;
+      star.alt = "فارغ";
+      star.width = 36;
+      star.height = 36;
+      star.style.opacity = "0.28";
+      star.style.filter = "grayscale(1)";
+      starsEl.appendChild(star);
+    }
     btnNext.hidden = true;
     paintResultHero(false);
   }
@@ -515,13 +545,12 @@ function wireUI() {
       if (state.activeBooster === kind) {
         state.activeBooster = null;
         state.view.boosterMode = null;
-        btn.classList.remove("active");
+        updateBoosterUI();
         return;
       }
-      document.querySelectorAll(".booster").forEach((b) => b.classList.remove("active"));
       state.activeBooster = kind;
       state.view.boosterMode = kind;
-      btn.classList.add("active");
+      updateBoosterUI();
     });
   });
 
@@ -537,6 +566,7 @@ styleFix.textContent = `.patient-avatar::after { content: attr(data-emoji); }`;
 document.head.appendChild(styleFix);
 
 wireUI();
+preloadCapsuleSprites();
 initHero();
 
 window.addEventListener("resize", () => {
