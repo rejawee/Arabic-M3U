@@ -106,8 +106,8 @@ export class BoardView {
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this.cssSize = size;
     const maxDim = Math.max(this.board.rows, this.board.cols);
-    this.gap = Math.max(3, size * 0.011);
-    this.cell = (size - this.gap * (maxDim + 1) - size * 0.035) / maxDim;
+    this.gap = Math.max(2, size * 0.006);
+    this.cell = (size - this.gap * (maxDim + 1) - size * 0.012) / maxDim;
   }
 
   cellAt(r, c) {

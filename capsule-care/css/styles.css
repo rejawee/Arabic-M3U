@@ -544,13 +544,13 @@ body {
 
 /* —— Game — Royal Match / Candy Crush layout —— */
 :root {
-  --rm-burgundy: #7a1a22;
-  --rm-burgundy-deep: #4a0c12;
-  --rm-gold: #e8c468;
-  --rm-gold-bright: #ffe08a;
-  --rm-gold-dark: #b8892e;
-  --rm-cream: #fff6df;
-  --rm-cream-deep: #f3e0b5;
+  --rm-burgundy: #8b1e28;
+  --rm-burgundy-deep: #4a1016;
+  --rm-gold: #f0d078;
+  --rm-gold-bright: #ffe9a8;
+  --rm-gold-dark: #c4922a;
+  --rm-cream: #fff8e7;
+  --rm-cream-deep: #f0d9a0;
   --rm-panel-ink: #5a2a12;
   --rm-board-sky: #6eb8e8;
   --rm-board-sky-deep: #3a8bc4;
@@ -608,7 +608,7 @@ body {
   padding: 0.55rem 0.55rem 0.65rem;
   border-radius: 0 0 22px 22px;
   background: linear-gradient(180deg, #9a2a32 0%, var(--rm-burgundy) 45%, var(--rm-burgundy-deep) 100%);
-  border: 3.5px solid var(--rm-gold);
+  border: 4.5px solid var(--rm-gold);
   border-top: none;
   box-shadow:
     0 10px 28px rgba(0, 0, 0, 0.5),
@@ -619,7 +619,7 @@ body {
 .rm-panel {
   position: relative;
   background: linear-gradient(180deg, #fffaf0 0%, var(--rm-cream) 40%, var(--rm-cream-deep) 100%);
-  border: 3px solid var(--rm-gold);
+  border: 3.5px solid var(--rm-gold);
   border-radius: 18px;
   min-height: 72px;
   box-shadow:
@@ -665,7 +665,7 @@ body {
 }
 
 .rm-moves-num {
-  font-size: clamp(1.9rem, 8vw, 2.45rem);
+  font-size: clamp(2.2rem, 9vw, 2.8rem);
   font-weight: 900;
   color: var(--rm-panel-ink);
   line-height: 1;
@@ -735,8 +735,8 @@ body {
 }
 
 .rm-avatar {
-  width: 84px;
-  height: 84px;
+  width: 92px;
+  height: 92px;
   border-radius: 50%;
   display: grid;
   place-items: center;
@@ -801,7 +801,7 @@ body {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  border: 3px solid var(--rm-gold);
+  border: 3.5px solid var(--rm-gold);
   background: linear-gradient(180deg, #5a5a5a, #2a2a2a);
   color: #fff;
   font-size: 1.15rem;
@@ -953,8 +953,8 @@ body {
 
 .booster {
   position: relative;
-  width: 82px;
-  height: 82px;
+  width: 88px;
+  height: 88px;
   border: none;
   border-radius: 50%;
   background: transparent;
