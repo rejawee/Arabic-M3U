@@ -4,10 +4,10 @@
  */
 import { CAPSULE_TYPES, CAPSULE_SPRITES, SPECIAL_SPRITES, OBSTACLE_SPRITES, capsuleSpritePath } from "./config.js";
 
-/** نسب مرجع Royal Match: كبسولة أعرض (~1.2:1) تملأ معظم عرض الخلية */
-export const CAPSULE_ASPECT = 1.2;
+/** نسب مرجع Royal Match: كبسولة chunky تملأ الخلية مثل قطع اللعبة */
+export const CAPSULE_ASPECT = 1.25;
 export const CAPSULE_FILL = 0.5;
-const SPRITE_FILL = 0.88;
+const SPRITE_FILL = 0.92;
 
 const spriteCache = new Map();
 const obstacleCache = new Map();
@@ -505,30 +505,33 @@ export function drawBoardFrame(ctx, w, h, cell, gap, rows, cols, theme = null) {
   const oy = (h - gh) / 2;
   const c = theme?.colors || {};
 
-  const pad = cell * 0.18;
-  roundRectPath(ctx, ox - pad, oy - pad, gw + pad * 2, gh + pad * 2, cell * 0.28);
-  const frame = ctx.createLinearGradient(0, oy - pad, 0, oy + gh + pad);
-  frame.addColorStop(0, c.frameTop || "rgba(30, 70, 90, 0.55)");
-  frame.addColorStop(1, c.frameBottom || "rgba(8, 28, 40, 0.65)");
-  ctx.fillStyle = frame;
+  const pad = cell * 0.14;
+  roundRectPath(ctx, ox - pad, oy - pad, gw + pad * 2, gh + pad * 2, cell * 0.32);
+  const tray = ctx.createLinearGradient(0, oy - pad, 0, oy + gh + pad);
+  tray.addColorStop(0, c.frameTop || "rgba(120, 190, 235, 0.92)");
+  tray.addColorStop(1, c.frameBottom || "rgba(55, 130, 190, 0.95)");
+  ctx.fillStyle = tray;
   ctx.fill();
-  ctx.strokeStyle = c.frameBorder || "rgba(255,215,120,0.35)";
-  ctx.lineWidth = 2;
+  ctx.strokeStyle = c.frameBorder || "rgba(255, 214, 120, 0.85)";
+  ctx.lineWidth = Math.max(2, cell * 0.06);
   ctx.stroke();
 
   for (let r = 0; r < rows; r++) {
     for (let cIdx = 0; cIdx < cols; cIdx++) {
       const x = ox + cIdx * (cell + gap);
       const y = oy + r * (cell + gap);
-      const rr = cell * 0.24;
-      roundRectPath(ctx, x, y, cell, cell, rr);
-      ctx.fillStyle =
-        (r + cIdx) % 2 === 0
-          ? c.cellLight || "rgba(255,255,255,0.07)"
-          : c.cellDark || "rgba(0,0,0,0.18)";
+      const rr = cell * 0.22;
+      roundRectPath(ctx, x + 1, y + 2, cell, cell, rr);
+      ctx.fillStyle = "rgba(0,40,80,0.18)";
       ctx.fill();
-      ctx.strokeStyle = "rgba(255,255,255,0.06)";
-      ctx.lineWidth = 1;
+      roundRectPath(ctx, x, y, cell, cell, rr);
+      const light = (r + cIdx) % 2 === 0;
+      ctx.fillStyle = light
+        ? c.cellLight || "rgba(210, 240, 255, 0.92)"
+        : c.cellDark || "rgba(150, 205, 240, 0.88)";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255,255,255,0.45)";
+      ctx.lineWidth = 1.2;
       ctx.stroke();
     }
   }

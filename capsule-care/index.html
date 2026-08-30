@@ -70,69 +70,85 @@
       </div>
     </section>
 
-    <!-- Gameplay -->
+    <!-- Gameplay — Royal Match layout -->
     <section id="screen-game" class="screen" data-theme="neighborhood" aria-label="لوحة اللعب">
       <canvas id="game-scene" class="game-scene-canvas" aria-hidden="true"></canvas>
       <div class="stage-bg" id="stage-bg" aria-hidden="true">
         <div class="stage-bg-glow"></div>
       </div>
 
+      <!-- Top HUD: Target | Portrait | Moves (Royal Match proportions) -->
       <header class="rm-hud">
-        <div class="rm-hud-bar">
-          <div class="rm-level-badge" id="hud-level">
-            <span class="rm-level-label">مستوى</span>
-            <strong id="hud-level-num">1</strong>
-          </div>
-          <div class="rm-goals" id="hud-goals">
-            <span class="rm-goals-label">هدف العلاج</span>
-            <div class="rm-goals-list" id="hud-goals-list"></div>
-          </div>
-          <div class="rm-patient">
-            <div class="rm-portrait-ring">
-              <div class="rm-portrait" id="hud-portrait">👩</div>
+        <div class="rm-hud-frame">
+          <div class="rm-panel rm-panel--target" id="hud-goals">
+            <div class="rm-ribbon">
+              <span>الهدف</span>
             </div>
-            <div class="rm-patient-text">
+            <div class="rm-panel-body" id="hud-goals-list"></div>
+          </div>
+
+          <div class="rm-avatar-slot">
+            <div class="rm-avatar-ring">
+              <div class="rm-avatar" id="hud-portrait" aria-hidden="true">👩</div>
+            </div>
+            <div class="rm-avatar-meta">
               <strong id="hud-patient-name">سارة</strong>
               <span id="hud-condition">نزلة برد</span>
             </div>
+            <div class="rm-level-pip">
+              <span>م</span><strong id="hud-level-num">1</strong>
+            </div>
           </div>
-          <div class="rm-moves">
-            <span class="rm-moves-label">حركات</span>
-            <strong id="hud-moves">22</strong>
+
+          <div class="rm-panel rm-panel--moves">
+            <div class="rm-ribbon">
+              <span>الحركات</span>
+            </div>
+            <div class="rm-panel-body rm-panel-body--moves">
+              <strong id="hud-moves" class="rm-moves-num">22</strong>
+            </div>
           </div>
-          <button type="button" class="rm-pause" id="btn-pause" title="إيقاف">
-            <span class="rm-pause-icon" aria-hidden="true"></span>
-          </button>
         </div>
+        <button type="button" class="rm-settings" id="btn-pause" title="إعدادات / إيقاف">⚙</button>
       </header>
 
+      <!-- Board stage -->
       <div class="board-stage">
-        <div class="board-wrap" id="board-wrap">
-          <canvas id="board" width="720" height="720"></canvas>
-          <div class="board-fx" id="board-fx" aria-hidden="true"></div>
+        <div class="board-frame">
+          <div class="board-wrap" id="board-wrap">
+            <canvas id="board" width="720" height="720"></canvas>
+            <div class="board-fx" id="board-fx" aria-hidden="true"></div>
+          </div>
         </div>
         <div class="juice-layer" id="juice-layer" aria-hidden="true"></div>
       </div>
 
+      <!-- Booster pedestal (Royal Match footer) -->
       <div class="rm-booster-tray">
-        <footer class="boosters">
-        <button type="button" class="booster" data-booster="hammer" title="مطرقة العلاج — امسح صفاً">
-          <img class="booster-icon" src="assets/boosters/hammer.png" alt="مطرقة" width="64" height="64" />
-          <span class="booster-count" id="boost-hammer">3</span>
-        </button>
-        <button type="button" class="booster" data-booster="rocket" title="صاروخ الدواء — امسح عموداً">
-          <img class="booster-icon" src="assets/boosters/rocket.png" alt="صاروخ" width="64" height="64" />
-          <span class="booster-count" id="boost-rocket">3</span>
-        </button>
-        <button type="button" class="booster" data-booster="bomb" title="جرعة مركّزة — انفجار 3×3">
-          <img class="booster-icon" src="assets/boosters/bomb.png" alt="قنبلة" width="64" height="64" />
-          <span class="booster-count" id="boost-bomb">2</span>
-        </button>
-        <button type="button" class="booster" data-booster="mix" title="خلط الوصفة — إعادة ترتيب">
-          <img class="booster-icon" src="assets/boosters/mix.png" alt="خلط" width="64" height="64" />
-          <span class="booster-count" id="boost-mix">2</span>
-        </button>
-        </footer>
+        <div class="rm-pedestal">
+          <footer class="boosters">
+            <button type="button" class="booster" data-booster="hammer" title="مطرقة العلاج">
+              <span class="booster-ring booster-ring--red"></span>
+              <img class="booster-icon" src="assets/boosters/hammer.png" alt="مطرقة" width="72" height="72" />
+              <span class="booster-count" id="boost-hammer">3</span>
+            </button>
+            <button type="button" class="booster" data-booster="rocket" title="صاروخ الدواء">
+              <span class="booster-ring booster-ring--gold"></span>
+              <img class="booster-icon" src="assets/boosters/rocket.png" alt="صاروخ" width="72" height="72" />
+              <span class="booster-count" id="boost-rocket">3</span>
+            </button>
+            <button type="button" class="booster" data-booster="bomb" title="جرعة مركّزة">
+              <span class="booster-ring booster-ring--blue"></span>
+              <img class="booster-icon" src="assets/boosters/bomb.png" alt="قنبلة" width="72" height="72" />
+              <span class="booster-count" id="boost-bomb">2</span>
+            </button>
+            <button type="button" class="booster" data-booster="mix" title="خلط الوصفة">
+              <span class="booster-ring booster-ring--green"></span>
+              <img class="booster-icon" src="assets/boosters/mix.png" alt="خلط" width="72" height="72" />
+              <span class="booster-count" id="boost-mix">2</span>
+            </button>
+          </footer>
+        </div>
       </div>
     </section>
 

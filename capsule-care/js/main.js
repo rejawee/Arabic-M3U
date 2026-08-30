@@ -127,7 +127,7 @@ function setupHudPatient(level) {
     const chip = document.createElement("span");
     chip.className = "rm-goal-chip";
     chip.dataset.type = g.type;
-    chip.innerHTML = `<img class="rm-goal-icon" src="${CAPSULE_SPRITES[g.type]}" alt="" width="18" height="18" /><span class="rm-goal-count">0/${g.count}</span>`;
+    chip.innerHTML = `<img class="rm-goal-icon" src="${CAPSULE_SPRITES[g.type]}" alt="" width="36" height="44" /><span class="rm-goal-count">0/${g.count}</span>`;
     goalsList.appendChild(chip);
   });
 }
