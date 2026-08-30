@@ -464,21 +464,6 @@ function paintResultHero(won) {
   });
 }
 
-function paintBoosterIcons() {
-  document.querySelectorAll(".booster-canvas").forEach((c) => {
-    const kind = c.dataset.icon;
-    const dpr = Math.min(2, devicePixelRatio || 1);
-    const css = 44;
-    c.width = css * dpr;
-    c.height = css * dpr;
-    c.style.width = `${css}px`;
-    c.style.height = `${css}px`;
-    const ctx = c.getContext("2d");
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    drawBoosterIcon(ctx, kind, css);
-  });
-}
-
 function wireUI() {
   $("#btn-start").addEventListener("click", () => {
     renderMap();
