@@ -4,7 +4,7 @@
 
 ## العب الآن
 
-**https://experiment-share-chronicles-westminster.trycloudflare.com**
+**https://lie-each-magic-prove.trycloudflare.com**
 
 > رابط مؤقت. الرابط الدائم: **https://rejawee.github.io/Arabic-M3U/**
 
