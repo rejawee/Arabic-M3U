@@ -49,6 +49,11 @@ export class Board {
       scale: 1,
       alpha: 1,
       pop: 0,
+      tilt: 0,
+      squashX: 1,
+      squashY: 1,
+      glowPulse: 0,
+      landPulse: 0,
     };
   }
 
@@ -126,7 +131,11 @@ export class Board {
     const matches = this.findMatches();
     if (matches.size === 0) {
       this._swapCells(r1, c1, r2, c2);
-      if (animate) await animate.swap(a, b, r2, c2, r1, c1);
+      if (animate?.swapInvalid) {
+        await animate.swapInvalid(a, b, r1, c1, r2, c2);
+      } else if (animate) {
+        await animate.swap(a, b, r2, c2, r1, c1);
+      }
       this.onInvalidSwap?.();
       this.busy = false;
       return false;

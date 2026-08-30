@@ -142,6 +142,9 @@ export function drawCapsule(ctx, x, y, w, h, typeId, powder, opts = {}) {
     alpha = 1,
     scale = 1,
     highlight = 0,
+    rotation = 0,
+    squashX = 1,
+    squashY = 1,
   } = opts;
 
   ctx.save();
@@ -149,7 +152,8 @@ export function drawCapsule(ctx, x, y, w, h, typeId, powder, opts = {}) {
   const cx = x + w / 2;
   const cy = y + h / 2;
   ctx.translate(cx, cy);
-  ctx.scale(scale, scale);
+  ctx.rotate(rotation);
+  ctx.scale(scale * squashX, scale * squashY);
   ctx.translate(-cx, -cy);
 
   const { bw, bh, bx, by } = capsuleBounds(x, y, w, h);
