@@ -6,7 +6,7 @@
 
 طالما بيئة النشر تعمل، افتح:
 
-**https://aus-swap-vaccine-alan.trycloudflare.com**
+**https://venice-handed-nails-status.trycloudflare.com**
 
 > رابط مؤقت (يعمل طالما السيرفر شغّال). للرابط الدائم فعّل GitHub Pages بالأسفل.
 

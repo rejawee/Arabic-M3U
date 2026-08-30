@@ -5,7 +5,7 @@
 
 ## رابط اللعبة
 
-**https://aus-swap-vaccine-alan.trycloudflare.com**
+**https://venice-handed-nails-status.trycloudflare.com**
 
 > رابط مؤقت. للرابط الدائم: https://rejawee.github.io/Arabic-M3U/ (يحتاج تفعيل Pages)
 
