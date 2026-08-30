@@ -347,7 +347,6 @@ export class BoardView {
           m.tile.alpha = m.spawn ? 0 : 1;
         }
 
-        const maxDist = Math.max(...moves.map((m) => Math.abs(m.toR - m.fromR)), 1);
         const baseMs = 180;
         const perCell = 38;
 
