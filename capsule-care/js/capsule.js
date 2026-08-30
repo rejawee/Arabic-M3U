@@ -2,13 +2,14 @@
  * كبسولات Royal Match طبية — أسلوب juicy ثلاثي الأبعاد
  * غلاف زجاجي لامع + بودرة متوهجة متحركة + هالة اختيار + قطع خاصة
  */
-import { CAPSULE_TYPES, CAPSULE_SPRITES, SPECIAL_SPRITES, capsuleSpritePath } from "./config.js";
+import { CAPSULE_TYPES, CAPSULE_SPRITES, SPECIAL_SPRITES, OBSTACLE_SPRITES, capsuleSpritePath } from "./config.js";
 
 /** نسب مرجع Royal Match: كبسولة طويلة ضيقة (~2:1) */
 export const CAPSULE_ASPECT = 2.05;
 export const CAPSULE_FILL = 0.5;
 
 const spriteCache = new Map();
+const obstacleCache = new Map();
 
 export function preloadCapsuleSprites() {
   const paths = { ...CAPSULE_SPRITES, ...SPECIAL_SPRITES };
@@ -18,6 +19,20 @@ export function preloadCapsuleSprites() {
     img.src = src;
     spriteCache.set(key, img);
   }
+}
+
+export function preloadObstacleSprites() {
+  for (const [key, src] of Object.entries(OBSTACLE_SPRITES)) {
+    if (obstacleCache.has(key)) continue;
+    const img = new Image();
+    img.src = src;
+    obstacleCache.set(key, img);
+  }
+}
+
+export function preloadAllSprites() {
+  preloadCapsuleSprites();
+  preloadObstacleSprites();
 }
 
 function getSprite(typeId, special) {
@@ -446,6 +461,27 @@ function drawSpecialOverlay(ctx, cx, cy, bw, bh, special, def, t) {
     });
   }
   ctx.restore();
+}
+
+/** رسم عقبة اللوحة — sprite 3D أو fallback */
+export function drawObstacle(ctx, x, y, w, h, typeId = "crate") {
+  const img = obstacleCache.get(typeId) || obstacleCache.get("crate");
+  const pad = Math.max(2, w * 0.05);
+  if (spriteReady(img)) {
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,0.35)";
+    ctx.shadowBlur = w * 0.08;
+    ctx.shadowOffsetY = w * 0.04;
+    ctx.drawImage(img, x + pad, y + pad, w - pad * 2, h - pad * 2);
+    ctx.restore();
+    return true;
+  }
+  ctx.fillStyle = "rgba(0,0,0,0.35)";
+  roundRectPath(ctx, x + pad, y + pad, w - pad * 2, h - pad * 2, w * 0.18);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(126,240,216,0.25)";
+  ctx.stroke();
+  return false;
 }
 
 export function drawBoardFrame(ctx, w, h, cell, gap, rows, cols, theme = null) {

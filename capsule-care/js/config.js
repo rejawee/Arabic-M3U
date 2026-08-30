@@ -105,6 +105,24 @@ export function boosterSpritePath(id, state = "default") {
   return BOOSTER_SPRITES[id]?.[state] || BOOSTER_SPRITES[id]?.default;
 }
 
+/** عقبات اللوحة */
+export const OBSTACLE_TYPES = {
+  ice: { id: "ice", name: "جليد", sprite: "assets/obstacles/ice.png" },
+  crate: { id: "crate", name: "صندوق", sprite: "assets/obstacles/crate.png" },
+  lock: { id: "lock", name: "قفل", sprite: "assets/obstacles/lock.png" },
+  slime: { id: "slime", name: "مخاط", sprite: "assets/obstacles/slime.png" },
+};
+
+export const OBSTACLE_SPRITES = Object.fromEntries(
+  Object.entries(OBSTACLE_TYPES).map(([k, v]) => [k, v.sprite])
+);
+
+/** ي parse blocked: [r,c] أو [r,c,type] */
+export function parseBlockedEntry(entry) {
+  const [r, c, type = "crate"] = entry;
+  return { r, c, type: OBSTACLE_TYPES[type] ? type : "crate" };
+}
+
 /** ثيمات العيادات — خلفيات وألوان لكل مرحلة */
 export const CLINIC_THEMES = {
   neighborhood: {
@@ -296,9 +314,9 @@ export const LEVELS = [
       { type: "azure", count: 12 },
     ],
     blocked: [
-      [2, 3],
-      [3, 3],
-      [4, 3],
+      [2, 3, "ice"],
+      [3, 3, "ice"],
+      [4, 3, "ice"],
     ],
     sceneProps: ["🍯", "🍋", "💧", "🩹"],
   },
@@ -318,10 +336,10 @@ export const LEVELS = [
     types: ["ruby", "azure", "jade", "amber", "cyan"],
     goals: [{ type: "amber", count: 22 }],
     blocked: [
-      [0, 0],
-      [0, 6],
-      [7, 0],
-      [7, 6],
+      [0, 0, "crate"],
+      [0, 6, "crate"],
+      [7, 0, "slime"],
+      [7, 6, "slime"],
     ],
     sceneProps: ["🧸", "🌡️", "🎈", "💊"],
   },
@@ -341,10 +359,10 @@ export const LEVELS = [
     types: ["ruby", "azure", "jade", "amber", "cyan"],
     goals: [{ type: "cyan", count: 20 }],
     blocked: [
-      [3, 3],
-      [3, 4],
-      [4, 3],
-      [4, 4],
+      [3, 3, "lock"],
+      [3, 4, "lock"],
+      [4, 3, "lock"],
+      [4, 4, "lock"],
     ],
     sceneProps: ["🧴", "🌈", "🩹", "✨"],
   },
@@ -368,12 +386,12 @@ export const LEVELS = [
       { type: "azure", count: 10 },
     ],
     blocked: [
-      [1, 1],
-      [1, 6],
-      [6, 1],
-      [6, 6],
-      [3, 0],
-      [4, 7],
+      [1, 1, "ice"],
+      [1, 6, "lock"],
+      [6, 1, "crate"],
+      [6, 6, "slime"],
+      [3, 0, "ice"],
+      [4, 7, "lock"],
     ],
     sceneProps: ["🚨", "💉", "⚡", "🚑"],
   },
@@ -393,14 +411,14 @@ export const LEVELS = [
     types: ["ruby", "azure", "jade", "amber", "violet", "cyan"],
     goals: [{ type: "violet", count: 24 }],
     blocked: [
-      [2, 2],
-      [2, 5],
-      [5, 2],
-      [5, 5],
-      [0, 3],
-      [0, 4],
-      [7, 3],
-      [7, 4],
+      [2, 2, "ice"],
+      [2, 5, "ice"],
+      [5, 2, "lock"],
+      [5, 5, "lock"],
+      [0, 3, "crate"],
+      [0, 4, "crate"],
+      [7, 3, "slime"],
+      [7, 4, "slime"],
     ],
     sceneProps: ["💨", "💊", "🫁", "⚡"],
   },
@@ -424,10 +442,10 @@ export const LEVELS = [
       { type: "amber", count: 12 },
     ],
     blocked: [
-      [3, 1],
-      [3, 2],
-      [4, 5],
-      [4, 6],
+      [3, 1, "crate"],
+      [3, 2, "slime"],
+      [4, 5, "ice"],
+      [4, 6, "lock"],
     ],
     sceneProps: ["🔬", "📋", "☕", "💡"],
   },
@@ -451,14 +469,14 @@ export const LEVELS = [
       { type: "jade", count: 16 },
     ],
     blocked: [
-      [0, 0],
-      [0, 7],
-      [7, 0],
-      [7, 7],
-      [3, 3],
-      [3, 4],
-      [4, 3],
-      [4, 4],
+      [0, 0, "ice"],
+      [0, 7, "lock"],
+      [7, 0, "crate"],
+      [7, 7, "slime"],
+      [3, 3, "lock"],
+      [3, 4, "ice"],
+      [4, 3, "crate"],
+      [4, 4, "slime"],
     ],
     sceneProps: ["🧪", "⚗️", "🧬", "✨"],
   },

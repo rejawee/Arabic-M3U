@@ -1,4 +1,4 @@
-import { drawCapsule, drawBoardFrame } from "./capsule.js";
+import { drawCapsule, drawBoardFrame, drawObstacle } from "./capsule.js";
 import { key, parseKey } from "./board.js";
 import { BoardFx } from "./fx.js";
 import {
@@ -165,16 +165,8 @@ export class BoardView {
       for (let c = 0; c < this.board.cols; c++) {
         if (!this.board.isBlocked(r, c)) continue;
         const { x, y, w, h } = this.cellAt(r, c);
-        ctx.fillStyle = "rgba(0,0,0,0.35)";
-        roundRect(ctx, x + 4, y + 4, w - 8, h - 8, 12);
-        ctx.fill();
-        ctx.strokeStyle = "rgba(126,240,216,0.2)";
-        ctx.stroke();
-        ctx.fillStyle = "rgba(255,255,255,0.25)";
-        ctx.font = `${w * 0.35}px serif`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText("✚", x + w / 2, y + h / 2);
+        const obsType = this.board.getObstacle(r, c) || "crate";
+        drawObstacle(ctx, x, y, w, h, obsType);
       }
     }
 

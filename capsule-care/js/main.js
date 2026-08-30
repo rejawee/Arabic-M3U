@@ -1,7 +1,7 @@
 import { LEVELS, CAPSULE_TYPES, getRank, SAVE_KEY, BOOSTERS, BOOSTER_IDS, getLevelTheme, CAPSULE_SPRITES, UI_ICONS, boosterSpritePath } from "./config.js";
 import { Board } from "./board.js";
 import { BoardView } from "./view.js";
-import { CapsulePowder, drawCapsule, CAPSULE_ASPECT, preloadCapsuleSprites } from "./capsule.js";
+import { CapsulePowder, drawCapsule, CAPSULE_ASPECT, preloadAllSprites } from "./capsule.js";
 import { drawClinicScene, drawStoryScene } from "./scenes.js";
 import { JuiceEngine } from "./juice.js";
 
@@ -566,7 +566,7 @@ styleFix.textContent = `.patient-avatar::after { content: attr(data-emoji); }`;
 document.head.appendChild(styleFix);
 
 wireUI();
-preloadCapsuleSprites();
+preloadAllSprites();
 initHero();
 
 window.addEventListener("resize", () => {

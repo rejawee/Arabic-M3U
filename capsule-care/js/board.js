@@ -1,4 +1,5 @@
 import { CapsulePowder } from "./capsule.js";
+import { parseBlockedEntry } from "./config.js";
 
 /**
  * منطق مطابقة ثلاثية بأسلوب Royal Match
@@ -11,7 +12,13 @@ export class Board {
     this.cols = level.cols;
     this.types = level.types;
     this.grid = [];
-    this.blocked = new Set(level.blocked.map(([r, c]) => key(r, c)));
+    this.obstacles = new Map();
+    this.blocked = new Set();
+    for (const entry of level.blocked || []) {
+      const { r, c, type } = parseBlockedEntry(entry);
+      this.blocked.add(key(r, c));
+      this.obstacles.set(key(r, c), type);
+    }
     this.collected = Object.fromEntries(level.goals.map((g) => [g.type, 0]));
     this.busy = false;
     this.anim = [];
@@ -100,6 +107,10 @@ export class Board {
 
   isBlocked(r, c) {
     return this.blocked.has(key(r, c));
+  }
+
+  getObstacle(r, c) {
+    return this.obstacles.get(key(r, c)) || null;
   }
 
   /** تبديل متجاور */
