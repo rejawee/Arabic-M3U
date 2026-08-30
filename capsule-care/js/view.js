@@ -22,6 +22,7 @@ export class BoardView {
     this.onCellTap = null;
     this.boosterMode = null;
     this.theme = null;
+    this.juice = null;
     this._bindInput();
     if (typeof ResizeObserver !== "undefined") {
       this._ro = new ResizeObserver(() => this._resize());
@@ -116,7 +117,10 @@ export class BoardView {
     if (!this.board) return;
     const ctx = this.ctx;
     const s = this.cssSize;
+    const shake = this.juice?.getShakeOffset() || { x: 0, y: 0 };
     ctx.clearRect(0, 0, s, s);
+    ctx.save();
+    ctx.translate(shake.x, shake.y);
 
     const tc = this.theme?.colors;
     const bg = ctx.createRadialGradient(s * 0.5, s * 0.5, s * 0.15, s * 0.5, s * 0.5, s * 0.55);
@@ -174,6 +178,13 @@ export class BoardView {
       ctx.fill();
       ctx.globalAlpha = 1;
     }
+
+    const flash = this.juice?.getFlashAlpha() || 0;
+    if (flash > 0) {
+      ctx.fillStyle = `rgba(255,255,255,${flash})`;
+      ctx.fillRect(0, 0, s, s);
+    }
+    ctx.restore();
   }
 
   burstAt(r, c, type) {

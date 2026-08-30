@@ -15,6 +15,9 @@ export class Board {
     this.collected = Object.fromEntries(level.goals.map((g) => [g.type, 0]));
     this.busy = false;
     this.anim = [];
+    this.onCascadeStep = null;
+    this.onInvalidSwap = null;
+    this.onBigMatch = null;
   }
 
   init() {
@@ -124,6 +127,7 @@ export class Board {
     if (matches.size === 0) {
       this._swapCells(r1, c1, r2, c2);
       if (animate) await animate.swap(a, b, r2, c2, r1, c1);
+      this.onInvalidSwap?.();
       this.busy = false;
       return false;
     }
@@ -288,6 +292,9 @@ export class Board {
       if (toClear.size === 0) break;
 
       const creations = this._analyzeSpecialCreation(matched);
+      const specialCreated = creations[0]?.special || null;
+      this.onCascadeStep?.(toClear.size, specialCreated);
+      if (matched.size >= 5) this.onBigMatch?.(matched.size);
 
       // اجمع الأهداف وحرّك البودرة
       for (const k of toClear) {

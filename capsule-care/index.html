@@ -75,27 +75,40 @@
       </div>
 
       <header class="rm-hud">
-        <div class="rm-goals" id="hud-goals">
-          <span class="rm-goals-label">هدف</span>
-          <div class="rm-goals-list" id="hud-goals-list"></div>
-        </div>
-        <div class="rm-patient">
-          <div class="rm-portrait" id="hud-portrait">👩</div>
-          <div class="rm-patient-text">
-            <strong id="hud-patient-name">سارة</strong>
-            <span id="hud-condition">نزلة برد</span>
+        <div class="rm-hud-bar">
+          <div class="rm-level-badge" id="hud-level">
+            <span class="rm-level-label">مستوى</span>
+            <strong id="hud-level-num">1</strong>
           </div>
+          <div class="rm-goals" id="hud-goals">
+            <span class="rm-goals-label">هدف العلاج</span>
+            <div class="rm-goals-list" id="hud-goals-list"></div>
+          </div>
+          <div class="rm-patient">
+            <div class="rm-portrait-ring">
+              <div class="rm-portrait" id="hud-portrait">👩</div>
+            </div>
+            <div class="rm-patient-text">
+              <strong id="hud-patient-name">سارة</strong>
+              <span id="hud-condition">نزلة برد</span>
+            </div>
+          </div>
+          <div class="rm-moves">
+            <span class="rm-moves-label">حركات</span>
+            <strong id="hud-moves">22</strong>
+          </div>
+          <button type="button" class="rm-pause" id="btn-pause" title="إيقاف">
+            <span class="rm-pause-icon" aria-hidden="true"></span>
+          </button>
         </div>
-        <div class="rm-moves">
-          <span class="rm-moves-label">حركات</span>
-          <strong id="hud-moves">22</strong>
-        </div>
-        <button type="button" class="rm-pause" id="btn-pause" title="إيقاف">❚❚</button>
       </header>
 
-      <div class="board-wrap">
-        <canvas id="board" width="720" height="720"></canvas>
-        <div class="board-fx" id="board-fx" aria-hidden="true"></div>
+      <div class="board-stage">
+        <div class="board-wrap" id="board-wrap">
+          <canvas id="board" width="720" height="720"></canvas>
+          <div class="board-fx" id="board-fx" aria-hidden="true"></div>
+        </div>
+        <div class="juice-layer" id="juice-layer" aria-hidden="true"></div>
       </div>
 
       <div class="rm-booster-tray">

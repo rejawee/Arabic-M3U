@@ -3,6 +3,7 @@ import { Board } from "./board.js";
 import { BoardView } from "./view.js";
 import { CapsulePowder, drawCapsule, drawBoosterIcon, CAPSULE_ASPECT } from "./capsule.js";
 import { drawClinicScene, drawStoryScene } from "./scenes.js";
+import { JuiceEngine } from "./juice.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -17,6 +18,8 @@ const state = {
   animator: null,
   currentLevel: null,
   currentTheme: null,
+  juice: null,
+  prevGoalDone: {},
 };
 
 function loadProgress() {
@@ -108,14 +111,18 @@ function setupHudPatient(level) {
   const portrait = $("#hud-portrait");
   const name = $("#hud-patient-name");
   const cond = $("#hud-condition");
+  const levelNum = $("#hud-level-num");
   if (portrait) portrait.textContent = level.emoji;
   if (name) name.textContent = level.patient;
   if (cond) cond.textContent = level.condition;
+  if (levelNum) levelNum.textContent = String(level.id);
 
   const goalsList = $("#hud-goals-list");
   if (!goalsList) return;
   goalsList.innerHTML = "";
+  state.prevGoalDone = {};
   level.goals.forEach((g) => {
+    state.prevGoalDone[g.type] = false;
     const def = CAPSULE_TYPES[g.type];
     const chip = document.createElement("span");
     chip.className = "rm-goal-chip";
@@ -272,6 +279,9 @@ function startLevel() {
 
   state.board = new Board(lv);
   state.board.init();
+  state.board.onCascadeStep = (count, special) => state.juice?.onCascadeStep(count, special);
+  state.board.onInvalidSwap = () => state.juice?.onInvalidSwap();
+  state.board.onBigMatch = (count) => state.juice?.onBigMatch(count);
 
   const canvas = $("#board");
   if (!state.view) {
@@ -279,6 +289,11 @@ function startLevel() {
     state.view.onSwap = handleSwap;
     state.view.onCellTap = handleBoosterTap;
   }
+  if (!state.juice) {
+    state.juice = new JuiceEngine($("#juice-layer"), $("#board-wrap"));
+  }
+  state.view.juice = state.juice;
+  state.juice.start();
   state.view.setBoard(state.board);
   state.view.boosterMode = null;
   state.view.start();
@@ -295,7 +310,13 @@ function startLevel() {
 }
 
 function updateHud() {
-  $("#hud-moves").textContent = String(state.moves);
+  const movesEl = $("#hud-moves");
+  if (movesEl) {
+    movesEl.textContent = String(state.moves);
+    movesEl.classList.remove("moves-pulse");
+    void movesEl.offsetWidth;
+    movesEl.classList.add("moves-pulse");
+  }
   if (!state.board) return;
   const progress = state.board.goalProgress();
   const goalsList = $("#hud-goals-list");
@@ -307,7 +328,13 @@ function updateHud() {
       if (chip) {
         const done = state.board.collected[g.type] || 0;
         chip.querySelector(".rm-goal-count").textContent = `${done}/${g.count}`;
-        chip.style.opacity = done >= g.count ? "0.55" : "1";
+        const complete = done >= g.count;
+        chip.classList.toggle("rm-goal-chip--done", complete);
+        chip.style.opacity = complete ? "0.65" : "1";
+        if (complete && !state.prevGoalDone[g.type]) {
+          state.prevGoalDone[g.type] = true;
+          state.juice?.onGoalComplete();
+        }
       }
       gi++;
     });
@@ -366,6 +393,7 @@ function endLevel(won) {
   const eyebrow = $("#result-eyebrow");
 
   if (won) {
+    state.juice?.onLevelWin();
     let stars = 1;
     if (state.moves >= Math.floor(lv.moves * 0.25)) stars = 2;
     if (state.moves >= Math.floor(lv.moves * 0.45)) stars = 3;
