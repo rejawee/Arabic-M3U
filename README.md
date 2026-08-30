@@ -5,7 +5,7 @@
 
 ## رابط اللعبة
 
-**https://experiment-share-chronicles-westminster.trycloudflare.com**
+**https://lie-each-magic-prove.trycloudflare.com**
 
 > رابط مؤقت. للرابط الدائم: https://rejawee.github.io/Arabic-M3U/ (يحتاج تفعيل Pages)
 

@@ -6,7 +6,7 @@
 
 طالما بيئة النشر تعمل، افتح:
 
-**https://experiment-share-chronicles-westminster.trycloudflare.com**
+**https://lie-each-magic-prove.trycloudflare.com**
 
 > رابط مؤقت (يعمل طالما السيرفر شغّال). للرابط الدائم فعّل GitHub Pages بالأسفل.
 
