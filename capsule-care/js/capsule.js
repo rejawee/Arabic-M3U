@@ -7,6 +7,7 @@ import { CAPSULE_TYPES, CAPSULE_SPRITES, SPECIAL_SPRITES, OBSTACLE_SPRITES, caps
 /** نسب مرجع Royal Match: كبسولة طويلة ضيقة (~2:1) */
 export const CAPSULE_ASPECT = 2.05;
 export const CAPSULE_FILL = 0.5;
+const SPRITE_FILL = 1.0;
 
 const spriteCache = new Map();
 const obstacleCache = new Map();
@@ -49,15 +50,15 @@ function spriteReady(img) {
 
 /** يحسب أبعاد الجسم داخل خلية مربعة أو مستطيلة مع الحفاظ على نسبة المرجع */
 export function capsuleBounds(x, y, w, h) {
-  const padX = w * 0.05;
-  const padY = h * 0.03;
+  const padX = w * 0.02;
+  const padY = h * 0.01;
   const maxW = Math.max(8, w - padX * 2);
   const maxH = Math.max(8, h - padY * 2);
 
-  let bw = maxW * 0.94;
+  let bw = maxW * SPRITE_FILL;
   let bh = bw * CAPSULE_ASPECT;
-  if (bh > maxH * 0.97) {
-    bh = maxH * 0.97;
+  if (bh > maxH * 0.99) {
+    bh = maxH * 0.99;
     bw = bh / CAPSULE_ASPECT;
   }
 
@@ -211,6 +212,10 @@ export function drawCapsule(ctx, x, y, w, h, typeId, powder, opts = {}) {
   }
 
   if (spriteReady(baseSprite)) {
+    ctx.beginPath();
+    ctx.ellipse(cx, by + bh + h * 0.012, bw * 0.36, Math.max(2, h * 0.038), 0, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(0,0,0,0.3)";
+    ctx.fill();
     if (selected || highlight > 0) {
       ctx.shadowColor = def.glow;
       ctx.shadowBlur = selected ? 22 : 12;
@@ -466,13 +471,21 @@ function drawSpecialOverlay(ctx, cx, cy, bw, bh, special, def, t) {
 /** رسم عقبة اللوحة — sprite 3D أو fallback */
 export function drawObstacle(ctx, x, y, w, h, typeId = "crate") {
   const img = obstacleCache.get(typeId) || obstacleCache.get("crate");
-  const pad = Math.max(2, w * 0.05);
+  const pad = Math.max(1, w * 0.02);
+  const sx = x + pad;
+  const sy = y + pad;
+  const sw = w - pad * 2;
+  const sh = h - pad * 2;
   if (spriteReady(img)) {
     ctx.save();
-    ctx.shadowColor = "rgba(0,0,0,0.35)";
-    ctx.shadowBlur = w * 0.08;
-    ctx.shadowOffsetY = w * 0.04;
-    ctx.drawImage(img, x + pad, y + pad, w - pad * 2, h - pad * 2);
+    ctx.beginPath();
+    ctx.ellipse(x + w / 2, y + h * 0.92, sw * 0.34, Math.max(2, h * 0.05), 0, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(0,0,0,0.28)";
+    ctx.fill();
+    ctx.shadowColor = "rgba(0,0,0,0.42)";
+    ctx.shadowBlur = w * 0.1;
+    ctx.shadowOffsetY = w * 0.05;
+    ctx.drawImage(img, sx, sy, sw, sh);
     ctx.restore();
     return true;
   }
