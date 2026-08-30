@@ -5,9 +5,9 @@
 import { CAPSULE_TYPES, CAPSULE_SPRITES, SPECIAL_SPRITES, OBSTACLE_SPRITES, capsuleSpritePath } from "./config.js";
 
 /** نسب قطع Royal Match: كبسولة ممتلئة داخل الخلية (أعرض من 2:1 النحيف) */
-export const CAPSULE_ASPECT = 1.28;
+export const CAPSULE_ASPECT = 1.22;
 export const CAPSULE_FILL = 0.5;
-const SPRITE_FILL = 0.9;
+const SPRITE_FILL = 0.97;
 /** الرسم الإجرائي يطابق مرجع الزجاج+البودرة أفضل من PNG المتفاوت */
 const PREFER_PROCEDURAL = true;
 
@@ -52,8 +52,8 @@ function spriteReady(img) {
 
 /** يحسب أبعاد الجسم — يفضّل عرضاً ممتلئاً (~88% من الخلية) مثل المرجع */
 export function capsuleBounds(x, y, w, h) {
-  const padX = w * 0.02;
-  const padY = h * 0.02;
+  const padX = w * 0.005;
+  const padY = h * 0.005;
   const maxW = Math.max(8, w - padX * 2);
   const maxH = Math.max(8, h - padY * 2);
 

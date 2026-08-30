@@ -1,1 +1,3 @@
+assets/_generated/
 assets/_generated/*.png
+scripts/__pycache__/
