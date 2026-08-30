@@ -49,6 +49,7 @@
 
     <!-- Story intro before level -->
     <section id="screen-story" class="screen" data-theme="neighborhood" aria-label="قصة المستوى">
+      <canvas id="story-scene" class="story-scene-canvas" aria-hidden="true"></canvas>
       <div class="story-bg" aria-hidden="true"></div>
       <div class="story-panel">
         <div class="story-clinic" id="story-clinic">عيادة الحي</div>
@@ -68,26 +69,37 @@
 
     <!-- Gameplay -->
     <section id="screen-game" class="screen" data-theme="neighborhood" aria-label="لوحة اللعب">
+      <canvas id="game-scene" class="game-scene-canvas" aria-hidden="true"></canvas>
       <div class="stage-bg" id="stage-bg" aria-hidden="true">
         <div class="stage-bg-glow"></div>
-        <div class="stage-bg-decor" id="stage-decor"></div>
       </div>
-      <header class="game-hud">
-        <button type="button" class="icon-btn" id="btn-pause" title="إيقاف">❚❚</button>
-        <div class="hud-patient">
-          <span class="hud-label" id="hud-patient">المريض</span>
-          <div class="health-bar"><div class="health-fill" id="health-fill"></div></div>
+
+      <header class="rm-hud">
+        <div class="rm-goals" id="hud-goals">
+          <span class="rm-goals-label">هدف</span>
+          <div class="rm-goals-list" id="hud-goals-list"></div>
         </div>
-        <div class="hud-stats">
-          <div class="hud-stat"><span>حركات</span><strong id="hud-moves">20</strong></div>
-          <div class="hud-stat"><span>هدف</span><strong id="hud-goal">0/0</strong></div>
+        <div class="rm-patient">
+          <div class="rm-portrait" id="hud-portrait">👩</div>
+          <div class="rm-patient-text">
+            <strong id="hud-patient-name">سارة</strong>
+            <span id="hud-condition">نزلة برد</span>
+          </div>
         </div>
+        <div class="rm-moves">
+          <span class="rm-moves-label">حركات</span>
+          <strong id="hud-moves">22</strong>
+        </div>
+        <button type="button" class="rm-pause" id="btn-pause" title="إيقاف">❚❚</button>
       </header>
+
       <div class="board-wrap">
         <canvas id="board" width="720" height="720"></canvas>
         <div class="board-fx" id="board-fx" aria-hidden="true"></div>
       </div>
-      <footer class="boosters">
+
+      <div class="rm-booster-tray">
+        <footer class="boosters">
         <button type="button" class="booster" data-booster="hammer" title="مطرقة العلاج — امسح صفاً">
           <canvas class="booster-canvas" data-icon="hammer" width="64" height="64"></canvas>
           <span class="booster-label">مطرقة</span>
@@ -108,7 +120,8 @@
           <span class="booster-label">خلط</span>
           <span class="booster-count" id="boost-mix">2</span>
         </button>
-      </footer>
+        </footer>
+      </div>
     </section>
 
     <!-- Result — LAB COMPLETE -->

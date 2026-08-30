@@ -2,6 +2,7 @@ import { LEVELS, CAPSULE_TYPES, getRank, SAVE_KEY, BOOSTERS, BOOSTER_IDS, getLev
 import { Board } from "./board.js";
 import { BoardView } from "./view.js";
 import { CapsulePowder, drawCapsule, drawBoosterIcon, CAPSULE_ASPECT } from "./capsule.js";
+import { drawClinicScene, drawStoryScene } from "./scenes.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -14,6 +15,8 @@ const state = {
   boosters: { hammer: 3, rocket: 3, bomb: 2, mix: 2 },
   activeBooster: null,
   animator: null,
+  currentLevel: null,
+  currentTheme: null,
 };
 
 function loadProgress() {
@@ -41,6 +44,9 @@ function showScreen(id) {
 function applyTheme(level) {
   const theme = getLevelTheme(level);
   const c = theme.colors;
+  state.currentLevel = level;
+  state.currentTheme = theme;
+
   const root = document.documentElement;
   root.style.setProperty("--theme-glow1", c.appGlow1);
   root.style.setProperty("--theme-glow2", c.appGlow2);
@@ -48,6 +54,7 @@ function applyTheme(level) {
   root.style.setProperty("--theme-bg2", c.stageBg2);
   root.style.setProperty("--theme-bg3", c.stageBg3);
   root.style.setProperty("--theme-accent", c.accent);
+  root.style.setProperty("--theme-accent-soft", c.accentSoft);
   root.style.setProperty("--theme-hud-border", c.hudBorder);
   root.style.setProperty("--theme-story-panel", c.storyPanel);
   root.style.setProperty("--theme-health-1", c.health[0]);
@@ -59,13 +66,63 @@ function applyTheme(level) {
     if (screen) screen.dataset.theme = theme.id;
   }
 
-  const decor = $("#stage-decor");
-  if (decor) {
-    decor.innerHTML = theme.decor.map((d) => `<span>${d}</span>`).join("");
-  }
+  paintGameScene(level, theme);
+  paintStoryScene(level, theme);
 
   if (state.view) state.view.setTheme(theme);
   return theme;
+}
+
+function resizeSceneCanvas(canvas) {
+  if (!canvas) return { w: 0, h: 0, ctx: null };
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const w = rect.width;
+  const h = rect.height;
+  canvas.width = Math.floor(w * dpr);
+  canvas.height = Math.floor(h * dpr);
+  canvas.style.width = `${w}px`;
+  canvas.style.height = `${h}px`;
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { w, h, ctx };
+}
+
+function paintGameScene(level, theme) {
+  const canvas = $("#game-scene");
+  if (!canvas) return;
+  const { w, h, ctx } = resizeSceneCanvas(canvas);
+  if (!ctx || w < 10) return;
+  drawClinicScene(ctx, w, h, theme, level);
+}
+
+function paintStoryScene(level, theme) {
+  const canvas = $("#story-scene");
+  if (!canvas) return;
+  const { w, h, ctx } = resizeSceneCanvas(canvas);
+  if (!ctx || w < 10) return;
+  drawStoryScene(ctx, w, h, theme, level);
+}
+
+function setupHudPatient(level) {
+  const portrait = $("#hud-portrait");
+  const name = $("#hud-patient-name");
+  const cond = $("#hud-condition");
+  if (portrait) portrait.textContent = level.emoji;
+  if (name) name.textContent = level.patient;
+  if (cond) cond.textContent = level.condition;
+
+  const goalsList = $("#hud-goals-list");
+  if (!goalsList) return;
+  goalsList.innerHTML = "";
+  level.goals.forEach((g) => {
+    const def = CAPSULE_TYPES[g.type];
+    const chip = document.createElement("span");
+    chip.className = "rm-goal-chip";
+    chip.dataset.type = g.type;
+    chip.innerHTML = `<span class="rm-goal-swatch" style="background:linear-gradient(180deg,${def.powder[1]},${def.powder[3]})"></span><span class="rm-goal-count">0/${g.count}</span>`;
+    goalsList.appendChild(chip);
+  });
 }
 
 /* —— Hero floating capsules —— */
@@ -227,19 +284,31 @@ function startLevel() {
   state.view.start();
   state.animator = state.view.createAnimator();
 
-  $("#hud-patient").textContent = `${lv.patient} — ${lv.condition}`;
+  setupHudPatient(lv);
   updateHud();
   updateBoosterUI();
   showScreen("screen-game");
+  requestAnimationFrame(() => paintGameScene(lv, getLevelTheme(lv)));
 }
 
 function updateHud() {
   $("#hud-moves").textContent = String(state.moves);
-  const { done, total } = state.board.goalProgress();
-  $("#hud-goal").textContent = `${done}/${total}`;
-  const pct = total ? Math.min(100, (done / total) * 100) : 0;
-  // الصحة = تقدم العلاج
-  $("#health-fill").style.width = `${Math.max(8, pct)}%`;
+  if (!state.board) return;
+  const progress = state.board.goalProgress();
+  const goalsList = $("#hud-goals-list");
+  if (goalsList) {
+    const lv = LEVELS[state.levelIndex];
+    let gi = 0;
+    lv.goals.forEach((g) => {
+      const chip = goalsList.children[gi];
+      if (chip) {
+        const done = state.board.collected[g.type] || 0;
+        chip.querySelector(".rm-goal-count").textContent = `${done}/${g.count}`;
+        chip.style.opacity = done >= g.count ? "0.55" : "1";
+      }
+      gi++;
+    });
+  }
 }
 
 function updateBoosterUI() {
@@ -454,5 +523,12 @@ document.head.appendChild(styleFix);
 wireUI();
 paintBoosterIcons();
 initHero();
+
+window.addEventListener("resize", () => {
+  if (state.currentLevel && state.currentTheme) {
+    paintGameScene(state.currentLevel, state.currentTheme);
+    paintStoryScene(state.currentLevel, state.currentTheme);
+  }
+});
 
 console.info("شفاء — عيادة الكبسولات جاهزة");

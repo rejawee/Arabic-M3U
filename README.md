@@ -2,19 +2,22 @@
 
 لعبة مطابقة ثلاثية فاخرة بطابع طبي: أنت الطبيب، والكبسولات تحمل بودرة دواء متحركة بدقة عالية.
 
-## العب الآن
+## العب الآن (رابط مباشر)
 
-**https://lie-each-magic-prove.trycloudflare.com**
+طالما بيئة النشر تعمل، افتح:
 
-> رابط مؤقت. الرابط الدائم: **https://rejawee.github.io/Arabic-M3U/**
+**https://aus-swap-vaccine-alan.trycloudflare.com**
+
+> رابط مؤقت (يعمل طالما السيرفر شغّال). للرابط الدائم فعّل GitHub Pages بالأسفل.
 
 ## تشغيل محلي
 
 ```bash
+cd capsule-care
 npm start
 ```
 
-ثم افتح: http://localhost:4173
+ثم افتح على جهازك: http://localhost:4173
 
 ## GitHub Pages (رابط دائم)
 

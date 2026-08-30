@@ -109,9 +109,9 @@ export class BoardView {
     ctx.clearRect(0, 0, s, s);
 
     const tc = this.theme?.colors;
-    const bg = ctx.createRadialGradient(s * 0.5, s * 0.3, 10, s * 0.5, s * 0.5, s * 0.7);
-    bg.addColorStop(0, tc?.canvasGlow || "rgba(30, 110, 120, 0.35)");
-    bg.addColorStop(1, "rgba(4, 28, 36, 0.15)");
+    const bg = ctx.createRadialGradient(s * 0.5, s * 0.5, s * 0.15, s * 0.5, s * 0.5, s * 0.55);
+    bg.addColorStop(0, "rgba(0,0,0,0.08)");
+    bg.addColorStop(1, "rgba(0,0,0,0.22)");
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, s, s);
 

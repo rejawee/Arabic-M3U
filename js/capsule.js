@@ -402,8 +402,8 @@ export function drawBoardFrame(ctx, w, h, cell, gap, rows, cols, theme = null) {
   const pad = cell * 0.18;
   roundRectPath(ctx, ox - pad, oy - pad, gw + pad * 2, gh + pad * 2, cell * 0.28);
   const frame = ctx.createLinearGradient(0, oy - pad, 0, oy + gh + pad);
-  frame.addColorStop(0, c.frameTop || "rgba(30, 70, 90, 0.85)");
-  frame.addColorStop(1, c.frameBottom || "rgba(8, 28, 40, 0.9)");
+  frame.addColorStop(0, c.frameTop || "rgba(30, 70, 90, 0.55)");
+  frame.addColorStop(1, c.frameBottom || "rgba(8, 28, 40, 0.65)");
   ctx.fillStyle = frame;
   ctx.fill();
   ctx.strokeStyle = c.frameBorder || "rgba(255,215,120,0.35)";
