@@ -4,10 +4,10 @@
  */
 import { CAPSULE_TYPES, CAPSULE_SPRITES, SPECIAL_SPRITES, OBSTACLE_SPRITES, capsuleSpritePath } from "./config.js";
 
-/** نسب مرجع Royal Match: كبسولة طويلة ضيقة (~2:1) */
-export const CAPSULE_ASPECT = 2.05;
+/** نسب مرجع Royal Match: كبسولة أعرض (~1.2:1) تملأ معظم عرض الخلية */
+export const CAPSULE_ASPECT = 1.2;
 export const CAPSULE_FILL = 0.5;
-const SPRITE_FILL = 1.0;
+const SPRITE_FILL = 0.88;
 
 const spriteCache = new Map();
 const obstacleCache = new Map();
@@ -48,18 +48,19 @@ function spriteReady(img) {
   return img && img.complete && img.naturalWidth > 0;
 }
 
-/** يحسب أبعاد الجسم داخل خلية مربعة أو مستطيلة مع الحفاظ على نسبة المرجع */
+/** يحسب أبعاد الجسم — يفضّل عرضاً ممتلئاً (~88% من الخلية) مثل المرجع */
 export function capsuleBounds(x, y, w, h) {
   const padX = w * 0.02;
-  const padY = h * 0.01;
+  const padY = h * 0.02;
   const maxW = Math.max(8, w - padX * 2);
   const maxH = Math.max(8, h - padY * 2);
 
   let bw = maxW * SPRITE_FILL;
   let bh = bw * CAPSULE_ASPECT;
-  if (bh > maxH * 0.99) {
-    bh = maxH * 0.99;
-    bw = bh / CAPSULE_ASPECT;
+  if (bh > maxH * 0.96) {
+    const s = (maxH * 0.96) / bh;
+    bh *= s;
+    bw *= s;
   }
 
   return {

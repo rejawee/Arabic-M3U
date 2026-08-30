@@ -10,9 +10,9 @@ export const CAPSULE_TYPES = {
   azure: {
     id: "azure",
     name: "سماوية",
-    shell: ["#ffffff", "#bbdefb"],
-    powder: ["#e3f2fd", "#82b1ff", "#2979ff", "#1565c0", "#0a1f4a"],
-    glow: "rgba(41, 121, 255, 0.65)",
+    shell: ["#ffffff", "#90caf9"],
+    powder: ["#e3f2fd", "#64b5f6", "#1e88ff", "#0d47a1", "#001a40"],
+    glow: "rgba(30, 136, 255, 0.75)",
   },
   jade: {
     id: "jade",
@@ -31,16 +31,16 @@ export const CAPSULE_TYPES = {
   violet: {
     id: "violet",
     name: "بنفسجية",
-    shell: ["#ffffff", "#e1bee7"],
-    powder: ["#f3e5f5", "#e040fb", "#aa00ff", "#6a1b9a", "#1a0033"],
-    glow: "rgba(170, 0, 255, 0.55)",
+    shell: ["#ffffff", "#ce93d8"],
+    powder: ["#f3e5f5", "#ea80fc", "#d500f9", "#6a1b9a", "#1a0033"],
+    glow: "rgba(213, 0, 249, 0.7)",
   },
   cyan: {
     id: "cyan",
     name: "فيروزية",
-    shell: ["#ffffff", "#b2ebf2"],
-    powder: ["#e0f7fa", "#18ffff", "#00e5ff", "#00838f", "#00333a"],
-    glow: "rgba(0, 229, 255, 0.65)",
+    shell: ["#ffffff", "#80deea"],
+    powder: ["#e0f7fa", "#26c6da", "#00bcd4", "#006064", "#002a30"],
+    glow: "rgba(0, 188, 212, 0.7)",
   },
 };
 
