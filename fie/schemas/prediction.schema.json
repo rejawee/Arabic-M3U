@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fie.local/schemas/prediction.schema.json",
+  "title": "FIEMatchPrediction",
+  "type": "object",
+  "required": [
+    "match_id",
+    "generated_at",
+    "data_cutoff_at",
+    "model_version",
+    "probabilities",
+    "expected_goals",
+    "confidence"
+  ],
+  "properties": {
+    "match_id": { "type": "string", "minLength": 1 },
+    "competition_id": { "type": "string" },
+    "kickoff_utc": { "type": "string", "format": "date-time" },
+    "home_team_id": { "type": "string" },
+    "away_team_id": { "type": "string" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "data_cutoff_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Latest timestamp of any feature used; must be before kickoff"
+    },
+    "model_version": { "type": "string" },
+    "probabilities": {
+      "type": "object",
+      "required": ["home_win", "draw", "away_win"],
+      "properties": {
+        "home_win": { "type": "number", "minimum": 0, "maximum": 1 },
+        "draw": { "type": "number", "minimum": 0, "maximum": 1 },
+        "away_win": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "expected_goals": {
+      "type": "object",
+      "required": ["home", "away"],
+      "properties": {
+        "home": { "type": "number", "minimum": 0 },
+        "away": { "type": "number", "minimum": 0 }
+      }
+    },
+    "scoreline_matrix": {
+      "type": "object",
+      "additionalProperties": { "type": "number", "minimum": 0, "maximum": 1 }
+    },
+    "markets": {
+      "type": "object",
+      "properties": {
+        "over_2_5": { "type": "number", "minimum": 0, "maximum": 1 },
+        "under_2_5": { "type": "number", "minimum": 0, "maximum": 1 },
+        "btts_yes": { "type": "number", "minimum": 0, "maximum": 1 },
+        "btts_no": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "confidence": {
+      "type": "object",
+      "required": ["score", "tier"],
+      "properties": {
+        "score": { "type": "number", "minimum": 0, "maximum": 1 },
+        "tier": { "type": "string", "enum": ["low", "medium", "high"] },
+        "uncertainty_drivers": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "explanations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["factor", "impact"],
+        "properties": {
+          "factor": { "type": "string" },
+          "impact": { "type": "string", "enum": ["positive", "negative", "neutral"] },
+          "weight": { "type": "number" }
+        }
+      }
+    },
+    "intelligence": {
+      "type": "object",
+      "properties": {
+        "key_absences": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "team_id": { "type": "string" },
+              "player_name": { "type": "string" },
+              "reason": { "type": "string" },
+              "impact_score": { "type": "number" }
+            }
+          }
+        },
+        "context_flags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "sources": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}
