@@ -2,11 +2,18 @@
 
 نظام تحليل وتوقع مباريات كرة القدم: بيانات تاريخية، قوة فرق، هجوم/دفاع، تشكيلات وغيابات، سياق، واستخبارات خارجية **شرعية**.
 
+## التصميم (Figma)
+
+**الملف:** https://www.figma.com/design/JzfocA8oM2m6MjO39O5JW7
+
+التفاصيل: [docs/FIGMA.md](./docs/FIGMA.md)
+
 ## الوثائق
 
 | الملف | المحتوى |
 |------|---------|
 | [docs/FIE_INTELLIGENCE_BLUEPRINT.md](./docs/FIE_INTELLIGENCE_BLUEPRINT.md) | المخطط الشامل: بيانات، نماذج، مراحل |
+| [docs/FIGMA.md](./docs/FIGMA.md) | تصميم الواجهة في Figma |
 | [docs/DATA_SOURCES.md](./docs/DATA_SOURCES.md) | بطاقات مزودي البيانات وقرار MVP |
 | [docs/FEATURE_INVENTORY.md](./docs/FEATURE_INVENTORY.md) | قائمة الخصائص القابلة للتنفيذ |
 | [schemas/prediction.schema.json](./schemas/prediction.schema.json) | عقد JSON للتوقع |
