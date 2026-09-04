@@ -211,7 +211,11 @@ fs.writeFileSync(path.join(outDir, "pen.js"), js);
 // HTML panel body only (no html/head) for classic CodePen
 const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
 const bodyInner = bodyMatch ? bodyMatch[1].replace(/<script>[\s\S]*<\/script>/i, "").trim() : "";
-const headFonts = `<!-- Fonts loaded in HTML settings or paste this in HTML -->
+const headFonts = `<!--
+  شفاء — الصق هذا في لوحة HTML فقط.
+  CSS → pen.css | JS → pen.js
+  لا تلصق shifa-codepen.html داخل CodePen (يسبب 404).
+-->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=El+Messiri:wght@500;600;700&display=swap" rel="stylesheet" />
