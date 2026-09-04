@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>آرسنال × تشيلسي — FIE</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/fie.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="index.html">FIE</a>
+    <span class="crumb">مركز المباريات / آرسنال × تشيلسي</span>
+    <nav>
+      <a href="match-center.html">المباريات</a>
+    </nav>
+  </header>
+  <div class="wrap">
+    <p class="lede" style="margin-bottom:0.5rem">الدوري الإنجليزي · السبت 17:30 UTC</p>
+    <h1>آرسنال × تشيلسي</h1>
+
+    <div id="state-slot" class="state-banner" data-state="xi-unconfirmed" hidden>
+      <span class="dot" aria-hidden="true"></span>
+      <div>
+        <h3 id="state-title">XI غير مؤكد</h3>
+        <p id="state-detail">التشكيلة المتوقعة فقط — أعد التوليد عند إعلان التشكيلة الرسمية.</p>
+      </div>
+    </div>
+
+    <section class="panel" style="margin-top:1.25rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
+        <strong>احتمالات 1X2</strong>
+        <span class="chip" id="conf-chip">ثقة 71% · متوسطة</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:1.25rem">
+        <div><div style="color:var(--fie-ink-muted);font-size:0.85rem">فوز المضيف</div><div style="font-family:var(--fie-font-display);font-size:1.75rem;font-weight:700;color:var(--fie-teal)">46%</div></div>
+        <div><div style="color:var(--fie-ink-muted);font-size:0.85rem">تعادل</div><div style="font-family:var(--fie-font-display);font-size:1.75rem;font-weight:700">27%</div></div>
+        <div><div style="color:var(--fie-ink-muted);font-size:0.85rem">فوز الضيف</div><div style="font-family:var(--fie-font-display);font-size:1.75rem;font-weight:700">27%</div></div>
+      </div>
+    </section>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem">
+      <section class="panel">
+        <strong>أسواق مشتقة</strong>
+        <p class="lede" style="margin:0.75rem 0 0">xG 1.48 / 1.07 · فوق 2.5: 49% · BTTS: 44%</p>
+      </section>
+      <section class="panel">
+        <strong>عوامل التفسير</strong>
+        <p class="lede" style="margin:0.75rem 0 0">هجوم مضيف × دفاع ضيف (+) · غياب صانع لعب الضيف (+)</p>
+      </section>
+    </div>
+  </div>
+  <script src="js/config.js"></script>
+  <script src="js/data-states.js"></script>
+</body>
+</html>

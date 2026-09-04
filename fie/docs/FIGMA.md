@@ -24,6 +24,27 @@
 2. **Landing / Mobile** — نفس الهوية على 390pt
 3. **Match Center / Desktop** — قائمة مباريات تفاعلية (صفوف قابلة للنقر)
 4. **Match Intelligence / Desktop** — بطاقة توقع: 1X2، ثقة، أسواق، عوامل تفسير
+5. **Methodology / Desktop** — خط أنابيب Elo → Dixon-Coles → LightGBM → معايرة
+6. **Data States / Desktop [HIDDEN]** — كتالوج داخلي: ناقصة / XI غير مؤكد / XI مؤكد / متدهور
+
+## مكوّن حالات البيانات
+
+`DataState/Banner` (component set):
+- `State=incomplete`
+- `State=xi-unconfirmed`
+- `State=xi-confirmed`
+- `State=degraded`
+
+## واجهة ويب مخفية (`fie/web`)
+
+المسارات التالية **غير مدرجة** في التنقّل العام و`noindex`:
+
+| المسار | الفتح |
+|--------|------|
+| `internal/methodology.html` | يتطلب `?internal=1` |
+| `internal/data-states.html` | يتطلب `?internal=1` |
+
+معاينة حالة على بطاقة المباراة: `match.html?state=xi-unconfirmed`
 
 ## Tokens (Variables)
 
@@ -35,6 +56,5 @@
 ## الخطوة التالية في التصميم
 
 - تنويع نسب الاحتمال لكل مباراة في FixtureRow (variants أو overrides)
-- شاشة Methodology
-- حالات: بيانات ناقصة / XI مؤكد / Live لاحقاً
-- ربط Code Connect بعد بناء الواجهة في الكود
+- حالات Live لاحقاً
+- ربط Code Connect بعد استقرار الواجهة

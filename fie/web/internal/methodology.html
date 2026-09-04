@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>المنهجية (داخلي) — FIE</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/fie.css" />
+</head>
+<body>
+  <div id="gate" class="internal-gate" hidden>
+    <span class="hidden-badge">HIDDEN</span>
+    <h1 style="font-size:1.75rem;margin-top:0.75rem">مسار داخلي</h1>
+    <p class="lede">شاشة المنهجية مخفية عن التنقّل العام. أضف <code>?internal=1</code> للفتح.</p>
+    <a class="btn btn-primary" href="?internal=1">فتح المنهجية</a>
+  </div>
+
+  <div id="content" hidden>
+    <header class="topbar">
+      <a class="brand" href="../index.html">FIE</a>
+      <span class="crumb">المنهجية</span>
+      <span class="hidden-badge">HIDDEN</span>
+      <nav>
+        <a href="data-states.html?internal=1">حالات البيانات</a>
+      </nav>
+    </header>
+    <div class="wrap">
+      <h1>كيف يعمل FIE</h1>
+      <p class="lede">احتمالات معايرة — وليست وعوداً. النموذج يدمج قوة الفرق مع الأداء والسياق ثم يقيس الثقة.</p>
+      <ol class="pipeline">
+        <li><span class="num">01</span><div><strong>البيانات</strong><p>نتائج، تشكيلات، غيابات، أسعار سوق — قبل الانطلاق فقط (point-in-time).</p></div></li>
+        <li><span class="num">02</span><div><strong>القوة والأداء</strong><p>Elo + هجوم/دفاع + xG وفورمة معدّلة بقوة الخصم.</p></div></li>
+        <li><span class="num">03</span><div><strong>Dixon-Coles</strong><p>مصفوفة نتائج من λ_home و λ_away مع تصحيح النتائج المنخفضة.</p></div></li>
+        <li><span class="num">04</span><div><strong>LightGBM</strong><p>تصحيح احتمالات 1X2 والأسواق فوق خط الأساس الإحصائي.</p></div></li>
+        <li><span class="num">05</span><div><strong>المعايرة</strong><p>Isotonic / Platt حتى تعني 60% ما يقارب 60% فعلاً.</p></div></li>
+        <li><span class="num">06</span><div><strong>الشرح والثقة</strong><p>عوامل مفهومة + درجة ثقة تعكس اكتمال البيانات والخلاف بين النماذج.</p></div></li>
+      </ol>
+      <section class="panel" style="margin-top:2rem">
+        <strong>ما لا يدّعيه FIE</strong>
+        <p class="lede" style="margin:0.5rem 0 0">لا يضمن نتائج، ولا يتفوق تلقائياً على خط الإغلاق، ولا يخفي نقص البيانات. الثقة تنخفض عندما يكون XI غير مؤكد أو التغذية متأخرة.</p>
+      </section>
+    </div>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script>
+    const unlocked = window.FIE.guardInternalPage();
+    document.getElementById(unlocked ? "content" : "gate").hidden = false;
+  </script>
+</body>
+</html>

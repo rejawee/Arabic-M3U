@@ -1,0 +1,253 @@
+:root {
+  --fie-canvas: #e9efea;
+  --fie-surface: #f7faf7;
+  --fie-pitch: #0a2e24;
+  --fie-pitch-deep: #061c16;
+  --fie-signal: #b8f000;
+  --fie-teal: #1c9b8e;
+  --fie-ink: #14201c;
+  --fie-ink-muted: #5a6b63;
+  --fie-on-dark: #f3f6f2;
+  --fie-on-dark-muted: #a7b8b0;
+  --fie-line: #c5d2cb;
+  --fie-radius: 12px;
+  --fie-font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --fie-font-body: "IBM Plex Sans", "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: var(--fie-font-body);
+  color: var(--fie-ink);
+  background: var(--fie-canvas);
+  line-height: 1.5;
+}
+
+a { color: inherit; text-decoration: none; }
+img { max-width: 100%; display: block; }
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0 1.5rem;
+  min-height: 72px;
+  background: var(--fie-pitch);
+  color: var(--fie-on-dark);
+}
+.topbar .brand {
+  font-family: var(--fie-font-display);
+  font-weight: 900;
+  font-size: 1.5rem;
+  color: var(--fie-signal);
+  letter-spacing: 0.06em;
+}
+.topbar .crumb { font-weight: 500; font-size: 0.95rem; opacity: 0.95; }
+.topbar nav {
+  margin-inline-start: auto;
+  display: flex;
+  gap: 1.25rem;
+  font-size: 0.9rem;
+  color: var(--fie-on-dark-muted);
+}
+.topbar nav a:hover { color: var(--fie-on-dark); }
+
+.wrap {
+  width: min(1120px, calc(100% - 3rem));
+  margin: 0 auto;
+  padding: 2.5rem 0 4rem;
+}
+
+h1 {
+  font-family: var(--fie-font-display);
+  font-weight: 700;
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  margin: 0 0 0.5rem;
+  line-height: 1.05;
+}
+.lede {
+  color: var(--fie-ink-muted);
+  font-size: 1.05rem;
+  max-width: 42rem;
+  margin: 0 0 2rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.85rem 1.6rem;
+  border-radius: 8px;
+  font-weight: 600;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+}
+.btn-primary {
+  background: var(--fie-signal);
+  color: var(--fie-ink);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--fie-on-dark);
+  border-color: var(--fie-on-dark);
+}
+
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 2rem 5vw 4rem;
+  background:
+    radial-gradient(circle at 80% 20%, rgba(184, 240, 0, 0.16), transparent 45%),
+    linear-gradient(145deg, var(--fie-pitch-deep), var(--fie-pitch) 55%, #123d30);
+  color: var(--fie-on-dark);
+}
+.hero-brand {
+  font-family: var(--fie-font-display);
+  font-weight: 900;
+  font-size: clamp(5rem, 18vw, 10.5rem);
+  line-height: 0.85;
+  margin: 0;
+}
+.hero-sub {
+  font-family: var(--fie-font-display);
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: 0.12em;
+  color: var(--fie-signal);
+  margin: 0.75rem 0 1rem;
+}
+.hero-copy {
+  color: var(--fie-on-dark-muted);
+  max-width: 36rem;
+  font-size: 1.15rem;
+}
+.cta-row { display: flex; flex-wrap: wrap; gap: 0.85rem; margin-top: 1.5rem; }
+
+.panel {
+  background: var(--fie-surface);
+  border: 1px solid var(--fie-line);
+  border-radius: var(--fie-radius);
+  padding: 1.35rem 1.5rem;
+}
+.pipeline { list-style: none; margin: 0; padding: 0; }
+.pipeline li {
+  display: grid;
+  grid-template-columns: 3rem 1fr;
+  gap: 1.25rem;
+  padding: 1.15rem 0;
+  border-bottom: 1px solid var(--fie-line);
+}
+.pipeline .num {
+  font-family: var(--fie-font-display);
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: var(--fie-teal);
+}
+.pipeline strong { display: block; font-size: 1.1rem; margin-bottom: 0.25rem; }
+.pipeline p { margin: 0; color: var(--fie-ink-muted); font-size: 0.95rem; }
+
+.state-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--fie-line);
+  background: var(--fie-surface);
+  margin: 0.75rem 0;
+}
+.state-banner .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-top: 0.35rem;
+  flex: 0 0 auto;
+}
+.state-banner h3 { margin: 0; font-size: 0.9rem; }
+.state-banner p { margin: 0.15rem 0 0; font-size: 0.8rem; color: var(--fie-ink-muted); }
+.state-banner[data-state="incomplete"] .dot { background: var(--fie-ink-muted); }
+.state-banner[data-state="xi-unconfirmed"] .dot { background: var(--fie-signal); }
+.state-banner[data-state="xi-confirmed"] .dot { background: var(--fie-teal); }
+.state-banner[data-state="degraded"] {
+  border-color: var(--fie-pitch);
+}
+.state-banner[data-state="degraded"] .dot { background: var(--fie-pitch); }
+
+.grid-states {
+  display: grid;
+  gap: 1.25rem;
+}
+.state-case h2 {
+  font-family: var(--fie-font-display);
+  font-size: 1.35rem;
+  margin: 0 0 0.35rem;
+}
+.state-case .meta {
+  font-family: var(--fie-font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+.hidden-badge {
+  display: inline-block;
+  border: 1px solid var(--fie-signal);
+  color: var(--fie-signal);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+}
+
+.internal-gate {
+  max-width: 28rem;
+  margin: 4rem auto;
+  padding: 1.5rem;
+  background: var(--fie-surface);
+  border: 1px solid var(--fie-line);
+  border-radius: var(--fie-radius);
+}
+.internal-gate input {
+  width: 100%;
+  margin: 0.75rem 0 1rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--fie-line);
+  border-radius: 8px;
+  font: inherit;
+}
+
+.fixture {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr auto auto;
+  gap: 1.25rem;
+  align-items: center;
+  padding: 1.1rem 1.25rem;
+  background: var(--fie-surface);
+  border: 1px solid var(--fie-line);
+  border-radius: var(--fie-radius);
+  margin-bottom: 0.75rem;
+}
+.fixture time {
+  font-family: var(--fie-font-display);
+  font-weight: 700;
+  font-size: 1.35rem;
+  display: block;
+}
+.fixture .league { font-size: 0.75rem; color: var(--fie-ink-muted); }
+.chip {
+  background: var(--fie-signal);
+  color: var(--fie-ink);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.35rem 0.7rem;
+  border-radius: 6px;
+}
+
+@media (max-width: 720px) {
+  .fixture { grid-template-columns: 1fr; }
+  .topbar { flex-wrap: wrap; padding-block: 0.85rem; }
+  .topbar nav { width: 100%; margin: 0; }
+}
