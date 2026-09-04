@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "start": "npx --yes serve -l 4173 .",
-    "dev": "npx --yes serve -l 4173 ."
+    "dev": "npx --yes serve -l 4173 .",
+    "build:codepen": "node ../scripts/build-codepen.mjs"
   }
 }
