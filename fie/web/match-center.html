@@ -19,27 +19,35 @@
   <div class="wrap">
     <h1>توقعات اليوم</h1>
     <p class="lede">احتمالات معايرة قبل الانطلاق — مع ثقة النموذج وأهم العوامل.</p>
-    <a class="fixture" href="match.html">
-      <div><time>17:30</time><span class="league">الدوري الإنجليزي</span></div>
-      <div><strong>آرسنال</strong><br />تشيلسي</div>
-      <div style="display:flex;gap:1rem;font-family:var(--fie-font-display);font-weight:700">
-        <span style="color:var(--fie-teal)">46%</span>
-        <span>27%</span>
-        <span>27%</span>
-      </div>
-      <span class="chip">ثقة متوسطة</span>
-    </a>
-    <a class="fixture" href="match.html">
-      <div><time>15:00</time><span class="league">الدوري الإنجليزي</span></div>
-      <div><strong>ليفربول</strong><br />سيتي</div>
-      <div style="display:flex;gap:1rem;font-family:var(--fie-font-display);font-weight:700">
-        <span style="color:var(--fie-teal)">41%</span>
-        <span>28%</span>
-        <span>31%</span>
-      </div>
-      <span class="chip">ثقة متوسطة</span>
-    </a>
+    <div id="fixtures"></div>
+    <p class="media-credit">شعارات الفرق وصور اللاعبين للعرض التجريبي عبر media.api-sports.io — يُستبدل في الإنتاج بتغذية مرخّصة.</p>
   </div>
   <script src="js/config.js"></script>
+  <script src="js/media.js"></script>
+  <script>
+    const root = document.getElementById("fixtures");
+    const { teams, fixtures } = window.FIE_MEDIA;
+    fixtures.forEach((fx) => {
+      const home = teams[fx.home];
+      const away = teams[fx.away];
+      const a = document.createElement("a");
+      a.className = "fixture";
+      a.href = fx.href;
+      a.innerHTML = `
+        <div><time>${fx.kickoff}</time><span class="league">${fx.league}</span></div>
+        <div>
+          <div class="team-line"><img class="crest" src="${home.crest}" alt="${home.nameEn}" /><strong>${home.name}</strong></div>
+          <div class="team-line"><img class="crest" src="${away.crest}" alt="${away.nameEn}" /><span>${away.name}</span></div>
+        </div>
+        <div style="display:flex;gap:1rem;font-family:var(--fie-font-display);font-weight:700">
+          <span style="color:var(--fie-teal)">${fx.probs[0]}%</span>
+          <span>${fx.probs[1]}%</span>
+          <span>${fx.probs[2]}%</span>
+        </div>
+        <span class="chip">ثقة متوسطة</span>
+      `;
+      root.appendChild(a);
+    });
+  </script>
 </body>
 </html>

@@ -22,10 +22,15 @@
 
 1. **Landing / Desktop** — Hero كامل العرض، العلامة FIE بطلة المشهد، جملة واحدة، مجموعة CTA
 2. **Landing / Mobile** — نفس الهوية على 390pt
-3. **Match Center / Desktop** — قائمة مباريات تفاعلية (صفوف قابلة للنقر)
-4. **Match Intelligence / Desktop** — بطاقة توقع: 1X2، ثقة، أسواق، عوامل تفسير
+3. **Match Center / Desktop** — قائمة مباريات تفاعلية مع **شعارات الفرق**
+4. **Match Intelligence / Desktop** — توقع + شعارات كبيرة + **صور لاعبين مؤثرين**
 5. **Methodology / Desktop** — خط أنابيب Elo → Dixon-Coles → LightGBM → معايرة
 6. **Data States / Desktop [HIDDEN]** — كتالوج داخلي: ناقصة / XI غير مؤكد / XI مؤكد / متدهور
+
+## الوسائط
+
+شعارات وصور تجريبية من `media.api-sports.io` مدمجة في Figma والويب (`fie/web/assets/`).  
+في الإنتاج: تغذية مرخّصة فقط — راجع `fie/web/assets/README.md`.
 
 ## مكوّن حالات البيانات
 
