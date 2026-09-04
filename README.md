@@ -18,3 +18,9 @@ cd capsule-care && npm start
 
 للنشر الدائم: Settings → Pages → branch `gh-pages` →  
 https://rejawee.github.io/Arabic-M3U/
+
+## FIE — Football Intelligence Engine
+
+مخطط الاستخبارات ومحرك التوقعات الأولي: [`fie/`](./fie/)
+
+- الوثيقة الرئيسية: [`fie/docs/FIE_INTELLIGENCE_BLUEPRINT.md`](./fie/docs/FIE_INTELLIGENCE_BLUEPRINT.md)

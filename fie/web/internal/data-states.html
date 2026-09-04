@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>حالات البيانات (داخلي) — FIE</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/fie.css" />
+</head>
+<body>
+  <div id="gate" class="internal-gate" hidden>
+    <span class="hidden-badge">HIDDEN</span>
+    <h1 style="font-size:1.75rem;margin-top:0.75rem">مسار داخلي</h1>
+    <p class="lede">كتالوج حالات البيانات مخفي عن التنقّل العام. أضف <code>?internal=1</code> للفتح.</p>
+    <a class="btn btn-primary" href="?internal=1">فتح الحالات</a>
+  </div>
+
+  <div id="content" hidden>
+    <header class="topbar">
+      <a class="brand" href="../index.html">FIE</a>
+      <span class="crumb">حالات البيانات · داخلي / مخفي</span>
+      <span class="hidden-badge">HIDDEN</span>
+      <nav>
+        <a href="methodology.html?internal=1">المنهجية</a>
+      </nav>
+    </header>
+    <div class="wrap">
+      <h1>حالات البيانات</h1>
+      <p class="lede">مراجعة سلوك الواجهة عند نقص البيانات أو تغيّر حالة التشكيلة. غير ظاهرة في التنقّل العام.</p>
+      <div class="grid-states" id="catalog"></div>
+    </div>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/data-states.js"></script>
+  <script>
+    const unlocked = window.FIE.guardInternalPage();
+    document.getElementById(unlocked ? "content" : "gate").hidden = false;
+    if (unlocked) {
+      const catalog = document.getElementById("catalog");
+      const notes = {
+        incomplete: "أخفِ أو ضعّف أسواق O/U إن نقصت الإحصاءات.",
+        "xi-unconfirmed": "اعرض عوامل الغياب كاحتمالات وليس حقائق.",
+        "xi-confirmed": "فعّل شرح التشكيلة الكاملة.",
+        degraded: "رسالة واضحة + آخر لقطة زمنية ظاهرة.",
+      };
+      Object.entries(window.FIE_DATA_STATES).forEach(([key, meta], i) => {
+        const el = document.createElement("article");
+        el.className = "panel state-case";
+        el.innerHTML = `
+          <div style="display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;align-items:baseline">
+            <h2>${i + 1} · ${meta.title}</h2>
+            <span class="meta">${meta.conf}</span>
+          </div>
+          <div class="state-banner" data-state="${key}">
+            <span class="dot" aria-hidden="true"></span>
+            <div><h3>${meta.title}</h3><p>${meta.detail}</p></div>
+          </div>
+          <p class="lede" style="margin:0.5rem 0 0">${notes[key] || ""}</p>
+          <p style="margin:0.75rem 0 0"><a class="btn btn-primary" href="../match.html?state=${encodeURIComponent(key)}">معاينة على بطاقة المباراة</a></p>
+        `;
+        catalog.appendChild(el);
+      });
+    }
+  </script>
+</body>
+</html>

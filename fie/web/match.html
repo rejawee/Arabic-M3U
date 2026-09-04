@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>توقع المباراة — FIE</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/fie.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="index.html">FIE</a>
+    <span class="crumb" id="crumb">مركز المباريات</span>
+    <nav>
+      <a href="match-center.html">المباريات</a>
+    </nav>
+  </header>
+  <div class="wrap">
+    <p class="lede" style="margin-bottom:0.5rem" id="meta">الدوري الإنجليزي · قبل الانطلاق</p>
+
+    <div class="match-hero" id="match-hero"></div>
+
+    <div id="state-slot" class="state-banner" data-state="xi-unconfirmed" hidden>
+      <span class="dot" aria-hidden="true"></span>
+      <div>
+        <h3 id="state-title">XI غير مؤكد</h3>
+        <p id="state-detail">التشكيلة المتوقعة فقط — أعد التوليد عند إعلان التشكيلة الرسمية.</p>
+      </div>
+    </div>
+
+    <section class="panel" style="margin-top:1.25rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
+        <strong>احتمالات 1X2</strong>
+        <span class="chip" id="conf-chip">ثقة 71% · متوسطة</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:1.25rem" id="probs"></div>
+    </section>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem">
+      <section class="panel">
+        <strong>أسواق مشتقة</strong>
+        <p class="lede" style="margin:0.75rem 0 0">xG 1.48 / 1.07 · فوق 2.5: 49% · BTTS: 44%</p>
+      </section>
+      <section class="panel">
+        <strong>عوامل التفسير</strong>
+        <p class="lede" style="margin:0.75rem 0 0" id="factors">هجوم مضيف × دفاع ضيف (+)</p>
+      </section>
+    </div>
+
+    <section class="panel" style="margin-top:1rem">
+      <strong>لاعبون مؤثرون</strong>
+      <div class="player-grid" id="players"></div>
+    </section>
+
+    <p class="media-credit">الوسائط للعرض التجريبي من media.api-sports.io — لا تُعاد توزيعها خارج نطاق التطوير دون ترخيص.</p>
+  </div>
+  <script src="js/config.js"></script>
+  <script src="js/media.js"></script>
+  <script src="js/data-states.js"></script>
+  <script>
+    const q = new URLSearchParams(location.search);
+    const homeKey = q.get("home") || "arsenal";
+    const awayKey = q.get("away") || "chelsea";
+    const { teams, players, fixtures } = window.FIE_MEDIA;
+    const home = teams[homeKey] || teams.arsenal;
+    const away = teams[awayKey] || teams.chelsea;
+    const fx = fixtures.find((f) => f.home === homeKey && f.away === awayKey) || fixtures[0];
+
+    document.title = `${home.name} × ${away.name} — FIE`;
+    document.getElementById("crumb").textContent = `مركز المباريات / ${home.name} × ${away.name}`;
+    document.getElementById("meta").textContent = `${fx.league} · ${fx.kickoff} UTC`;
+
+    document.getElementById("match-hero").innerHTML = `
+      <div class="side">
+        <img class="crest crest-lg" src="${home.crest}" alt="${home.nameEn}" />
+        <div class="side-name">${home.name}</div>
+      </div>
+      <div class="vs">×</div>
+      <div class="side">
+        <img class="crest crest-lg" src="${away.crest}" alt="${away.nameEn}" />
+        <div class="side-name">${away.name}</div>
+      </div>
+    `;
+
+    const labels = ["فوز المضيف", "تعادل", "فوز الضيف"];
+    document.getElementById("probs").innerHTML = fx.probs.map((p, i) => `
+      <div>
+        <div style="color:var(--fie-ink-muted);font-size:0.85rem">${labels[i]}</div>
+        <div style="font-family:var(--fie-font-display);font-size:1.75rem;font-weight:700;${i===0?'color:var(--fie-teal)':''}">${p}%</div>
+      </div>
+    `).join("");
+
+    const grid = document.getElementById("players");
+    const absenceKeys = new Set((fx.absences || []).map((a) => a.player));
+    (fx.keyPlayers || []).forEach((key) => {
+      const pl = players[key];
+      if (!pl) return;
+      const card = document.createElement("article");
+      card.className = "player-card" + (absenceKeys.has(key) ? " is-absence" : "");
+      const abs = (fx.absences || []).find((a) => a.player === key);
+      card.innerHTML = `
+        <img src="${pl.photo}" alt="${pl.name}" />
+        <div class="name">${pl.name}</div>
+        <div class="role">${pl.role} · ${teams[pl.team]?.name || ""}</div>
+        ${abs ? `<div class="tag">${abs.reason}</div>` : ""}
+      `;
+      grid.appendChild(card);
+    });
+    if (!(fx.keyPlayers || []).length) {
+      grid.innerHTML = `<p class="lede" style="margin:0">لا توجد بطاقات لاعبين لهذه المباراة في العرض التجريبي.</p>`;
+    }
+
+    if ((fx.absences || []).length) {
+      document.getElementById("factors").textContent =
+        `هجوم مضيف × دفاع ضيف (+) · غياب/شك: ${(fx.absences[0] && players[fx.absences[0].player]?.name) || "لاعب مفتاح"} (+)`;
+    }
+  </script>
+</body>
+</html>
